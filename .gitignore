@@ -1,0 +1,18 @@
+# Arquivos de editor/IDE
+.idea/
+.vscode/
+*.code-workspace
+*.swp
+*.swo
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.user
+
+# Arquivos do CLion
+cmake-build-*/
+
+#Outputs
+*.ppm
+*.exe
+*.out
