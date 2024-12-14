@@ -15,17 +15,29 @@ class hitable_list: public hitable {
 };
 
 bool hitable_list::hit(const ray& r, float t_min, float t_max, hit_record& rec) const {
+    // Cria um registro temporário para armazenar as informações da interseção
     hit_record temp_rec;
+    // Variável booleana para verificar se algum objeto foi atingido
     bool hit_anything = false;
+    // Inicializa a distância mais próxima (closest_so_far) como t_max, 
+    // que é a maior distância possível até o momento
     double closest_so_far = t_max;
-    for (int i =0; i<list_size; i++){
+    // Loop para verificar a interseção do raio com cada objeto da lista
+    for (int i = 0; i < list_size; i++) {
+        // Verifica se o objeto atual na lista é atingido pelo raio,
+        // passando o intervalo de distâncias válidas (t_min e t_max)
         if (list[i]->hit(r, t_min, closest_so_far, temp_rec)) {
-            hit_anything = true;
-            closest_so_far = temp_rec.t;
+            // Se o objeto for atingido, marca que algo foi atingido
+            hit_anything = true;         
+            // Atualiza a distância do ponto de interseção mais próximo
+            closest_so_far = temp_rec.t;        
+            // Atualiza o registro de interseção com as informações do objeto atingido
             rec = temp_rec;
         }
     }
+    // Retorna true se algum objeto foi atingido, caso contrário, retorna false
     return hit_anything;
 }
+
 
 #endif

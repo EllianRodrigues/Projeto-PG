@@ -10,10 +10,10 @@ class ray {
             : orig(origin), dir(direction)
         {}
 
-        point3 origin() const  { return orig; }
-        vec3 direction() const { return dir; }
+        point3 origin() const  { return orig; } // retorna o ponto de origem
+        vec3 direction() const { return dir; } // retorna o vetor de direção
 
-        point3 at(double t) const {
+        point3 at(double t) const { // retorna o ponto em que o raio esta depois de percorrer t tempo
             return orig + t*dir;
         }
 
