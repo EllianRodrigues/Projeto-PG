@@ -7,10 +7,11 @@ class plane : public hitable {
 public:
     vec3 point;   // Um ponto no plano
     vec3 normal;  // Vetor normal ao plano
-    vec3 cor;
+    vec3 cor;     // Cor do plano
 
     plane() {}
-    plane(const vec3& p, const vec3& n) : point(p), normal(unit_vector(n)) {}
+    // Atualizando o construtor para aceitar a cor
+    plane(const vec3& p, const vec3& n, const vec3& cor) : point(p), normal(unit_vector(n)), cor(cor) {}
 
     virtual bool hit(const ray& r, float t_min, float t_max, hit_record& rec) const override {
         float denom = dot(normal, r.direction());
@@ -20,12 +21,13 @@ public:
                 rec.t = t;
                 rec.p = r.at(t);
                 rec.normal = normal;
-                rec.cor = vec3(0.0, 1.0, 0.0); 
+                rec.cor = cor;  // Passando a cor para o hit_record
                 return true;
             }
         }
         return false;
     }
 };
+
 
 #endif

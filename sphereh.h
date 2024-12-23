@@ -5,13 +5,13 @@
 
 class sphere: public hitable {
     public:
-        sphere(){}
-        sphere(vec3 cen, float r): center(cen), radius(r) {};
+        sphere() {}
+        // Atualizando o construtor para aceitar vec3 como cor
+        sphere(vec3 cen, float r, vec3 cor): center(cen), radius(r), cor(cor) {};  
         virtual bool hit(const ray&r, float tmin, float tmax, hit_record& rec) const;
         vec3 center;
         float radius;
-        std::string cor;  // Armazena a cor da esfera como uma string (exemplo: "red", "green")
-
+        vec3 cor;  // Agora a cor é armazenada como um vec3 (RGB)
         
 };
 
@@ -30,6 +30,7 @@ bool sphere::hit(const ray& r, float t_min, float t_max, hit_record& rec) const 
             rec.normal = (rec.p - center) / radius;  // Normal no ponto de interseção
             // rec.cor = vec3(1.0, 0.0, 0.0); // Vermelho puro (RGB: 1.0, 0.0, 0.0)
             rec.objeto="esfera";
+            rec.cor = cor;
             return true;  // O raio intersecta a esfera
         }
         temp = (-b + sqrt(discriminant)) / a;
@@ -39,6 +40,7 @@ bool sphere::hit(const ray& r, float t_min, float t_max, hit_record& rec) const 
             rec.normal = (rec.p - center) / radius;  // Normal no ponto de interseção
             // rec.cor = vec3(1.0, 0.0, 0.0); // Vermelho puro (RGB: 1.0, 0.0, 0.0)
             rec.objeto="esfera";
+            rec.cor = cor;
             return true;  // O raio intersecta a esfera
         }
     }

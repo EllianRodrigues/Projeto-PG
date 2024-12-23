@@ -39,12 +39,12 @@ vec3 color2(const ray& r, hitable *world) {
     hit_record rec; // Estrutura para armazenar as informações sobre o ponto de interseção
     if (world->hit(r, 0.0, FLT_MAX, rec)) { // Verifica se o raio atinge algum objeto no mundo
         // Se o raio atingir um objeto, a cor será baseada no vetor normal do ponto de interseção
-        return 0.5 * vec3(rec.normal.x() + 1, rec.normal.y() + 1, rec.normal.z() + 1); // Normalizada para a faixa [0, 1]
-        // return vec3(1.0, 0.0, 0.0); // Vermelho puro (RGB: 1.0, 0.0, 0.0)
-        if (rec.objeto == "esfera") {  // Use '==' para comparação
-            return vec3(1.0, 0.0, 0.0); // Cor vermelha
-        }
-        // return rec.cor;
+        // return 0.5 * vec3(rec.normal.x() + 1, rec.normal.y() + 1, rec.normal.z() + 1); // Normalizada para a faixa [0, 1]
+        // // return vec3(1.0, 0.0, 0.0); // Vermelho puro (RGB: 1.0, 0.0, 0.0)
+        // if (rec.objeto == "esfera") {  // Use '==' para comparação
+        //     return vec3(1.0, 0.0, 0.0); // Cor vermelha
+        // }
+        return rec.cor;
         return 0.5 * vec3(rec.normal.x() + 1, rec.normal.y() + 1, rec.normal.z() + 1); // Normalizada para a faixa [0, 1]
 
     }
@@ -127,8 +127,8 @@ void spheraAndPlane(){
     double screen_width = 4.0;    // Largura da tela de visualização
     camera cam(lookfrom, lookat, vup, distance, screen_height, screen_width, nx);
     hitable *list[2];
-    list[0] = new sphere(vec3(0,0,-1), 0.5);
-    list[1] = new plane(vec3(0, -0.5, 0), vec3(0, 1, 0));
+    list[0] = new sphere(vec3(0,0,-1), 0.5, vec3(1.0,0.0,0.0));
+    list[1] = new plane(vec3(0,  -0.5, 0), vec3(0, 1, 0), vec3(0, 0, 1));  // Plano 1 (cor cinza)
     hitable *world = new hitable_list(list, 2);
     for (int j = ny - 1; j >= 0; j--) { 
         for (int i = 0; i < nx; i++) { 
@@ -164,24 +164,24 @@ void teste() {
     vec3 vup(0, 1, 0);            // Vetor "para cima" que define a orientação da câmera
     double distance = 1.0;        // Distância entre a câmera e a tela (foco da lente)
     double screen_height = 2.0;   // Altura da tela de visualização
-    double screen_width = 4.0;    // Largura da tela de visualização
+    double screen_width = 2.0;    // Largura da tela de visualização
     camera cam(lookfrom, lookat, vup, distance, screen_height, screen_width, nx);
     
     // Criando planos (posição, vetor normal)
     hitable *list[12];
     
     // Planos
-    list[0] = new plane(vec3(5,  0, 0), vec3(-1, 0, 0));  // Plano 1 (Green)
-    list[1] = new plane(vec3(-5, 0, 0), vec3(1, 0, 0));   // Plano 2 (Red)
-    list[2] = new plane(vec3(0, -5, 0), vec3(0, 1, 0));   // Plano 3 (White)
-    list[3] = new plane(vec3(0,  5, 0), vec3(0, -1, 0));  // Plano 4 (White)
-    list[4] = new plane(vec3(0, 0, -5), vec3(0, 0, 1));   // Plano 5 (White)
-    list[5] = new plane(vec3(0, 0, 6), vec3(0, 0, -1));   // Plano 6 (White)
+    list[0] = new plane(vec3(5,  0, 0), vec3(-1, 0, 0), vec3(0.0, 1.0, 0.0));  // Plano 1 (cor Verde)
+    list[1] = new plane(vec3(-5, 0, 0), vec3(1, 0, 0), vec3(1.0, 0.0, 0.0));   // Plano 2 (cor Vermelho)
+    list[2] = new plane(vec3(0, -5, 0), vec3(0, 1, 0), vec3(1.0, 1.0, 1.0));   // Plano 3 (cor Branca)
+    list[3] = new plane(vec3(0,  5, 0), vec3(0, -1, 0), vec3(1.0, 1.0, 1.0));  // Plano 4 (cor Branca)
+    list[4] = new plane(vec3(0, 0, -5), vec3(0, 0, 1), vec3(1.0, 1.0, 1.0));   // Plano 5 (cor Branca)
+    list[5] = new plane(vec3(0, 0, 6), vec3(0, 0, -1), vec3(1.0, 1.0, 1.0));  // Plano 6 (cor Branca)
     
-    // Esferas (posição, raio)
-    list[6] = new sphere(vec3(2, -4.5, -2), 0.5);           // Esfera 1 (Red)
-    list[7] = new sphere(vec3(0, -4, -2), 1);               // Esfera 2 (Green)
-    list[8] = new sphere(vec3(-3, -3.5, -2), 1.5);          // Esfera 3 (Blue)
+    // Esferas (com cores específicas)
+    list[6] = new sphere(vec3(2, -4.5, -2), 0.5, vec3(1.0, 0.0, 0.0));  // Esfera 1 (cor Vermelha)
+    list[7] = new sphere(vec3(0, -4, -2), 1, vec3(0.0, 1.0, 0.0));      // Esfera 2 (cor Verde)
+    list[8] = new sphere(vec3(-3, -3.5, -2), 1.5, vec3(0.0, 0.0, 1.0)); // Esfera 3 (cor Azul)        
 
     hitable *world = new hitable_list(list, 9);  // Agora temos 9 objetos (planos e esferas)
 
