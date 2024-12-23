@@ -7,6 +7,7 @@ class plane : public hitable {
 public:
     vec3 point;   // Um ponto no plano
     vec3 normal;  // Vetor normal ao plano
+    vec3 cor;
 
     plane() {}
     plane(const vec3& p, const vec3& n) : point(p), normal(unit_vector(n)) {}
@@ -19,6 +20,7 @@ public:
                 rec.t = t;
                 rec.p = r.at(t);
                 rec.normal = normal;
+                rec.cor = vec3(0.0, 1.0, 0.0); 
                 return true;
             }
         }

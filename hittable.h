@@ -8,6 +8,8 @@ struct hit_record
     float t;
     vec3 p;
     vec3 normal;
+    vec3 cor;
+    string objeto;
 };
 
 class hitable {

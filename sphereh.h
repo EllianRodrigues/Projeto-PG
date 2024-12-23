@@ -10,6 +10,9 @@ class sphere: public hitable {
         virtual bool hit(const ray&r, float tmin, float tmax, hit_record& rec) const;
         vec3 center;
         float radius;
+        std::string cor;  // Armazena a cor da esfera como uma string (exemplo: "red", "green")
+
+        
 };
 
 bool sphere::hit(const ray& r, float t_min, float t_max, hit_record& rec) const {
@@ -25,6 +28,8 @@ bool sphere::hit(const ray& r, float t_min, float t_max, hit_record& rec) const 
             rec.t = temp;  // Armazena a distância da interseção
             rec.p = r.at(rec.t);  // Armazena o ponto de interseção
             rec.normal = (rec.p - center) / radius;  // Normal no ponto de interseção
+            // rec.cor = vec3(1.0, 0.0, 0.0); // Vermelho puro (RGB: 1.0, 0.0, 0.0)
+            rec.objeto="esfera";
             return true;  // O raio intersecta a esfera
         }
         temp = (-b + sqrt(discriminant)) / a;
@@ -32,6 +37,8 @@ bool sphere::hit(const ray& r, float t_min, float t_max, hit_record& rec) const 
             rec.t = temp;  // Armazena a distância da interseção
             rec.p = r.at(rec.t);  // Armazena o ponto de interseção
             rec.normal = (rec.p - center) / radius;  // Normal no ponto de interseção
+            // rec.cor = vec3(1.0, 0.0, 0.0); // Vermelho puro (RGB: 1.0, 0.0, 0.0)
+            rec.objeto="esfera";
             return true;  // O raio intersecta a esfera
         }
     }
