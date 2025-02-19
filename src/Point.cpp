@@ -13,7 +13,7 @@ A classe precisa ser instanciada passando as componentes x, y e z
 */
 
 class point{
-    private:
+    public:
         double x;
         double y;
         double z;
