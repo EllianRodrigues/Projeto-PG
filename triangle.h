@@ -1,27 +1,29 @@
 #ifndef TRIANGLE_H
 #define TRIANGLE_H
 
+
 #include "hittable.h"
+#include "material.h"
+
 
 class triangle : public hitable {
 public:
-    vec3 vertex1, vertex2, vertex3;  // Os três vértices do triângulo
-    vec3 cor;  // Cor do triângulo
+    vec3 vertex1, vertex2, vertex3;
+    vec3 cor;
+    Material material; // Adicionando material
 
     triangle() {}
 
-    // Construtor para inicializar os vértices e a cor do triângulo
-    triangle(const vec3& v1, const vec3& v2, const vec3& v3, const vec3& cor)
-        : vertex1(v1), vertex2(v2), vertex3(v3), cor(cor) {}
+    triangle(const vec3& v1, const vec3& v2, const vec3& v3, const vec3& cor, const Material& mat)
+        : vertex1(v1), vertex2(v2), vertex3(v3), cor(cor), material(mat) {}
 
-    // Método de interseção com o raio
     virtual bool hit(const ray& r, float t_min, float t_max, hit_record& rec) const override {
         vec3 e1 = vertex2 - vertex1;
         vec3 e2 = vertex3 - vertex1;
         vec3 h = cross(r.direction(), e2);
         float a = dot(e1, h);
 
-        if (a > -1e-6 && a < 1e-6)  // Verifica se o raio é paralelo ao triângulo
+        if (a > -1e-6 && a < 1e-6)
             return false;
 
         float f = 1.0 / a;
@@ -42,9 +44,9 @@ public:
         if (t > t_min && t < t_max) {
             rec.t = t;
             rec.p = r.at(t);
-            rec.normal = cross(e1, e2);
-            rec.normal = unit_vector(rec.normal);  // Normal normalizada
+            rec.normal = unit_vector(cross(e1, e2));
             rec.cor = cor;
+            rec.material = material; // Armazena o material do triângulo
             return true;
         }
 

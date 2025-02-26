@@ -241,13 +241,17 @@ inline vec3 random_on_hemisphere(const vec3& normal) {
         return -on_unit_sphere;
 }
 
+vec3 normalize(const vec3& v) {
+    float len = v.length();  // Calcula o comprimento do vetor
+    if (len == 0) return v;  // Se o comprimento for zero, não normaliza
+    return v / len;  // Retorna o vetor normalizado
+}
 
 
 
-
-// inline vec3 reflect(const vec3& v, const vec3& n) {
-//     return v - 2*dot(v,n)*n;
-// }
+inline vec3 reflect(const vec3& v, const vec3& n) {
+    return v - 2*dot(v,n)*n;
+}
 
 // inline vec3 refract(const vec3& uv, const vec3& n, double etai_over_etat) {
 //     auto cos_theta = std::fmin(dot(-uv, n), 1.0);
