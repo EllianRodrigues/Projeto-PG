@@ -16,6 +16,8 @@
 #include "triangle.h"  // Inclui a classe triangle
 
 
+
+
 float hit_sphere(const vec3& center, float radius, const ray& r) {
     vec3 oc = r.origin() - center;   // Vetor de origem do raio ao centro da esfera
     float a = dot(r.direction(), r.direction());  // a = |direção do raio|^2
@@ -153,6 +155,137 @@ vec3 color2(const ray& r, hitable *world) {
 //     imageFile.close();
 // }
 
+
+vec3 color_with_shadows3(const ray& r, hitable *world, const std::vector<light>& lights, vec3 ambient_light, int depth = 5) {
+    if (depth <= 0) return vec3(0, 0, 0);  // Evita chamadas infinitas
+
+    hit_record rec;
+    if (world->hit(r, 0.001f, FLT_MAX, rec)) {
+        vec3 final_color(0, 0, 0);
+        vec3 normal = rec.normal;
+        vec3 view_dir = normalize(-r.direction());  // Direção do observador
+        Material material = rec.material;
+
+        // Reflexão e refração com Fresnel
+        float fresnel = pow(1.0f - fabs(dot(view_dir, normal)), 5.0f);
+        float reflectance = material.reflexao + (1.0f - material.reflexao) * fresnel;
+
+        vec3 reflected_color(0, 0, 0);
+        vec3 refracted_color(0, 0, 0);
+
+        // Reflexão
+        if (material.reflexao > 0.0f) {
+            vec3 reflected_dir = reflect(r.direction(), normal);
+            ray reflected_ray(rec.p + reflected_dir * 0.001f, reflected_dir);
+            reflected_color = color_with_shadows3(reflected_ray, world, lights, ambient_light, depth - 1);
+        }
+
+        // Refração
+        if (material.transmissao > 0.0f) {
+            float eta = (dot(view_dir, normal) > 0) ? material.ior : (1.0f / material.ior);
+            vec3 refracted_dir = refract(r.direction(), normal, eta);
+            if (length(refracted_dir) > 0) { 
+                ray refracted_ray(rec.p + refracted_dir * 0.001f, refracted_dir);
+                refracted_color = color_with_shadows3(refracted_ray, world, lights, ambient_light, depth - 1);
+            }
+        }
+
+        // Mistura entre reflexão e refração
+        final_color += reflectance * reflected_color + (1.0f - reflectance) * refracted_color;
+
+        // Iluminação direta
+        for (const auto& light : lights) {
+            vec3 light_dir = normalize(light.position - rec.p);
+            vec3 half_vector = normalize(light_dir + view_dir);
+            float diff = std::max(float(dot(normal, light_dir)), 0.0f);
+            float spec = pow(std::max(float(dot(normal, half_vector)), 0.0f), material.shininess);
+
+            // Verificação de sombra
+            ray shadow_ray(rec.p + normal * 0.001f, light_dir);  // Raio para verificar se a luz é bloqueada
+            hit_record shadow_rec;
+            if (world->hit(shadow_ray, 0.001f, FLT_MAX, shadow_rec)) {
+                continue;  // Se o raio de sombra bate em algo, a luz é bloqueada
+            }
+
+            // Cálculos de difuso e especular
+            vec3 diffuse = material.color * diff * material.difuso * light.color;
+            vec3 specular = vec3(1.0, 1.0, 1.0) * spec * material.especular * light.color;
+
+            final_color += diffuse + specular;
+        }
+
+        // Adiciona luz ambiente
+        final_color += ambient_light * material.color * material.ambiental;
+
+        return final_color;
+    }
+    return vec3(0, 0, 0);
+}
+
+
+
+
+vec3 color_with_shadows2(const ray& r, hitable *world, const std::vector<light>& lights, vec3 ambient_light, int depth = 5) {
+    if (depth <= 0) return vec3(0, 0, 0);  // Evita chamadas infinitas
+
+    hit_record rec;
+    if (world->hit(r, 0.001f, FLT_MAX, rec)) {
+        vec3 final_color(0, 0, 0);
+        vec3 normal = rec.normal;
+        vec3 view_dir = normalize(-r.direction());  // Direção do observador
+        Material material = rec.material;
+
+        // Reflexão e refração com Fresnel
+        float fresnel = pow(1.0f - fabs(dot(view_dir, normal)), 5.0f);
+        float reflectance = material.reflexao + (1.0f - material.reflexao) * fresnel;
+
+        vec3 reflected_color(0, 0, 0);
+        vec3 refracted_color(0, 0, 0);
+
+        // Reflexão
+        if (material.reflexao > 0.0f) {
+            vec3 reflected_dir = reflect(r.direction(), normal);
+            ray reflected_ray(rec.p + reflected_dir * 0.001f, reflected_dir);
+            reflected_color = color_with_shadows2(reflected_ray, world, lights, ambient_light, depth - 1);
+        }
+
+        // Refração
+        if (material.transmissao > 0.0f) {
+            float eta = (dot(view_dir, normal) > 0) ? material.ior : (1.0f / material.ior);
+            vec3 refracted_dir = refract(r.direction(), normal, eta);
+            if (length(refracted_dir) > 0) { 
+                ray refracted_ray(rec.p + refracted_dir * 0.001f, refracted_dir);
+                refracted_color = color_with_shadows2(refracted_ray, world, lights, ambient_light, depth - 1);
+            }
+        }
+
+        // Mistura entre reflexão e refração
+        final_color += reflectance * reflected_color + (1.0f - reflectance) * refracted_color;
+
+        // Iluminação direta
+        for (const auto& light : lights) {
+            vec3 light_dir = normalize(light.position - rec.p);
+            vec3 half_vector = normalize(light_dir + view_dir);
+            float diff = std::max(float(dot(normal, light_dir)), 0.0f);
+            float spec = pow(std::max(float(dot(normal, half_vector)), 0.0f), material.shininess);
+            
+            vec3 diffuse = material.color * diff * material.difuso * light.color;
+            vec3 specular = vec3(1.0, 1.0, 1.0) * spec * material.especular * light.color;
+            
+            final_color += diffuse + specular;
+        }
+
+        // Adiciona luz ambiente
+        final_color += ambient_light * material.color * material.ambiental;
+
+        return final_color;
+    }
+    return vec3(0, 0, 0);
+}
+
+
+
+
 vec3 color_with_shadows(const ray& r, hitable *world, const std::vector<light>& lights, const vec3& ambient_light) {
     hit_record rec;
     float shadow_attenuation = 0.5;
@@ -201,6 +334,8 @@ vec3 color_with_shadows(const ray& r, hitable *world, const std::vector<light>& 
         return (1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
     }
 }
+
+
 
 
 vec3 color_shadow(const ray& r, hitable *world, const std::vector<light>& lights, const vec3& ambient_light) {
@@ -315,10 +450,152 @@ vec3 color4(const ray& r, hitable *world, const std::vector<light>& lights) {
     }
 }
 
+vec3 color_with_shadows4(const ray& r, hitable *world, const std::vector<light>& lights, vec3 ambient_light, int depth = 5) {
+    if (depth <= 0) return vec3(0, 0, 0);  // Evita chamadas infinitas
+
+    hit_record rec;
+    if (world->hit(r, 0.001f, FLT_MAX, rec)) {
+        vec3 final_color(0, 0, 0);
+        vec3 normal = rec.normal;
+        vec3 view_dir = normalize(-r.direction());  // Direção do observador
+        Material material = rec.material;
+
+        // Reflexão e refração com Fresnel
+        float fresnel = pow(1.0f - fabs(dot(view_dir, normal)), 5.0f);
+        float reflectance = material.reflexao + (1.0f - material.reflexao) * fresnel;
+
+        vec3 reflected_color(0, 0, 0);
+        vec3 refracted_color(0, 0, 0);
+
+        // Reflexão
+        if (material.reflexao > 0.0f) {
+            vec3 reflected_dir = reflect(r.direction(), normal);
+            ray reflected_ray(rec.p + reflected_dir * 0.001f, reflected_dir);
+            reflected_color = color_with_shadows4(reflected_ray, world, lights, ambient_light, depth - 1);
+        }
+
+        // Refração
+        if (material.transmissao > 0.0f) {
+            float eta = (dot(view_dir, normal) > 0) ? material.ior : (1.0f / material.ior);
+            vec3 refracted_dir = refract(r.direction(), normal, eta);
+            if (length(refracted_dir) > 0) { 
+                ray refracted_ray(rec.p + refracted_dir * 0.001f, refracted_dir);
+                refracted_color = color_with_shadows4(refracted_ray, world, lights, ambient_light, depth - 1);
+            }
+        }
+
+        // Mistura entre reflexão e refração
+        // A refração deve ser usada diretamente para materiais transparentes
+        if (material.transmissao > 0.0f) {
+            // Para materiais transparentes, a cor refratada deve ser ponderada pela transparência
+            final_color += (1.0f - material.transmissao) * reflected_color + material.transmissao * refracted_color;
+        } else {
+            // Caso contrário, mistura entre reflexão e refração normal
+            final_color += reflectance * reflected_color + (1.0f - reflectance) * refracted_color;
+        }
+
+        // Iluminação direta
+        for (const auto& light : lights) {
+            vec3 light_dir = normalize(light.position - rec.p);
+            vec3 half_vector = normalize(light_dir + view_dir);
+            float diff = std::max(float(dot(normal, light_dir)), 0.0f);
+            float spec = pow(std::max(float(dot(normal, half_vector)), 0.0f), material.shininess);
+
+            // Verificação de sombra
+            ray shadow_ray(rec.p + normal * 0.001f, light_dir);  // Raio para verificar se a luz é bloqueada
+            hit_record shadow_rec;
+            if (world->hit(shadow_ray, 0.001f, FLT_MAX, shadow_rec)) {
+                continue;  // Se o raio de sombra bate em algo, a luz é bloqueada
+            }
+
+            // Cálculos de difuso e especular
+            vec3 diffuse = material.color * diff * material.difuso * light.color;
+            vec3 specular = vec3(1.0, 1.0, 1.0) * spec * material.especular * light.color;
+
+            final_color += diffuse + specular;
+        }
+
+        // Adiciona luz ambiente
+        final_color += ambient_light * material.color * material.ambiental;
+
+        return final_color;
+    }
+    return vec3(0, 0, 0);
+}
+
+
+
+
+vec3 color_with_shadowsteste(const ray& r, hitable *world, const std::vector<light>& lights, vec3 ambient_light, int depth = 5) {
+    if (depth <= 0) return vec3(0, 0, 0);  // Evita chamadas infinitas
+
+    hit_record rec;
+    if (world->hit(r, 0.001f, FLT_MAX, rec)) {
+        vec3 final_color(0, 0, 0);
+        vec3 normal = rec.normal;
+        vec3 view_dir = normalize(-r.direction());  // Direção do observador
+        Material material = rec.material;
+
+        // Reflexão e refração com Fresnel
+        float fresnel = pow(1.0f - fabs(dot(view_dir, normal)), 5.0f);  // Calculo de Fresnel
+        float reflectance = material.reflexao + (1.0f - material.reflexao) * fresnel;
+
+        vec3 reflected_color(0, 0, 0);
+        vec3 refracted_color(0, 0, 0);
+
+        // Reflexão
+        if (material.reflexao > 0.0f) {
+            vec3 reflected_dir = reflect(r.direction(), normal);
+            ray reflected_ray(rec.p + reflected_dir * 0.001f, reflected_dir);
+            reflected_color = color_with_shadowsteste(reflected_ray, world, lights, ambient_light, depth - 1);
+        }
+
+        // Refração
+        if (material.transmissao > 0.0f) {
+            float eta = (dot(view_dir, normal) > 0) ? material.ior : (1.0f / material.ior);
+            vec3 refracted_dir = refract(r.direction(), normal, eta);
+            if (length(refracted_dir) > 0) { 
+                ray refracted_ray(rec.p + refracted_dir * 0.001f, refracted_dir);
+                refracted_color = color_with_shadowsteste(refracted_ray, world, lights, ambient_light, depth - 1);
+            }
+        }
+
+        // Mistura entre reflexão e refração (transparente)
+        final_color += (1.0f - reflectance) * refracted_color + reflectance * reflected_color;
+
+        // Iluminação direta (modelo de Phong)
+        for (const auto& light : lights) {
+            vec3 light_dir = normalize(light.position - rec.p);
+            vec3 half_vector = normalize(light_dir + view_dir);
+            float diff = std::max(float(dot(normal, light_dir)), 0.0f);
+            float spec = pow(std::max(float(dot(normal, half_vector)), 0.0f), material.shininess);
+            
+            vec3 diffuse = material.color * diff * material.difuso * light.color;
+            vec3 specular = vec3(1.0, 1.0, 1.0) * spec * material.especular * light.color;
+            
+            final_color += diffuse + specular;
+        }
+
+        // Adiciona luz ambiente
+        final_color += ambient_light * material.color * material.ambiental;
+
+        return final_color;
+    }
+    return vec3(0, 0, 0);
+}
+
+
+
+
+
+
+
+
+
 void desafio1() {
     int nx = 500;  // Número de colunas de pixels da imagem
     int ny = 500;  // Número de linhas de pixels da imagem
-    std::ofstream imageFile("desafio_sombra.ppm"); // Abre o arquivo para salvar a imagem no formato PPM
+    std::ofstream imageFile("desafio_ultima_entrega.ppm"); // Abre o arquivo para salvar a imagem no formato PPM
     imageFile << "P3\n" << nx << " " << ny << "\n255\n"; // Cabeçalho do arquivo PPM: "P3" para cores RGB, tamanho da imagem, valor máximo de cor
     
     // Parâmetros da câmera
@@ -333,24 +610,50 @@ void desafio1() {
     // Criando planos (posição, vetor normal)
     hitable *list[4];
 
-    Material materialPersonalizado_amarelo(0.6f, 0.8f, 0.1f, 0.3f, 0.0f, 0.7f,1.0f, vec3(1.0, 1.0, 0.0));
-    Material materialPersonalizado_vermelho(0.6f, 0.8f, 0.1f, 0.3f, 0.0f, 0.7f,1.0f, vec3(1.0, 0.0, 0.0));
+    Material materialPersonalizado_amarelo(0.6f, 0.8f, 0.1f, 0.3f, 0.0f, 0.7f,1.0f, vec3(0.0, 0.0, 0.0));
+    Material materialPersonalizado_vermelho(0.6f, 0.8f, 1.0f, 0.9f, 0.0f, 0.7f,1.0f, vec3(1.0, 0.0, 0.0), 1.0f);
     Material materialPersonalizado_verde(0.6f, 0.8f, 0.1f, 0.3f, 0.0f, 0.7f,1.0f, vec3(0.0, 1.0, 0.0));
     Material materialPersonalizado_azul(0.6f, 0.8f, 0.1f, 0.3f, 0.0f, 0.7f, 1.0f, vec3(0.0, 0.0, 1.0));
+
+
+     Material vidro(0.1f, 0.0f, 0.1f, 0.9f, 0.5f, 0.2f, 0.0f, vec3(0.9, 0.9, 1.0), 1.5f);  // Vidro
+    Material agua(0.1f, 0.0f, 0.05f, 0.95f, 0.5f, 0.2f, 0.0f, vec3(0.0, 0.5, 1.0), 1.33f); // Água
+    Material diamante(0.1f, 0.0f, 0.2f, 0.9f, 0.7f, 0.2f, 0.0f, vec3(1.0, 1.0, 1.0), 2.42f); // Diamante
+    Material plastico(0.5f, 0.1f, 0.3f, 0.2f, 0.2f, 0.6f, 0.0f, vec3(1.0, 0.0, 0.0), 1.4f); // Plástico
+
+
     // Criando fontes de luz
-    light l1(vec3(5, 5, 5), vec3(1.0, 1.0, 1.0), 0.0); // Luz branca
-    light l2(vec3(-5, 5, 5), vec3(1.0, 0.0, 0.0), 1.0); // Luz vermelha
-    std::vector<light> lights = {l1, l2}; // Lista de luzes
+    light l1(vec3(0, 5, 5), vec3(1.0, 1.0, 1.0), 1.0f); // Luz branca
+    light l2(vec3(-5, 5, 5), vec3(1.0, 1.0, 1.0), 0.0f); // Luz vermelha
+    std::vector<light> lights = {l1}; // Lista de luzes
     // Planos
-    list[0] = new plane(vec3(0, -0.5, 0), vec3(0, 1, 0), vec3(1.0, 1.0, 0.0), materialPersonalizado_amarelo);  // Plano (chão) amarelo
+    // list[0] = new plane(vec3(0, -0.5, 0), vec3(0, 1, 0), vec3(1.0, 1.0, 0.0), vidro);  // Plano (chão) amarelo
 
-    // Esferas com cores e posições específicas
-    list[1] = new sphere(vec3(0, -0.5, 3.3), 0.6, vec3(1.0, 0.0, 0.0), materialPersonalizado_vermelho);  // Esfera vermelha (centro)
-    list[2] = new sphere(vec3(-1.3, 0.2, 2.3), 0.6, vec3(0.0, 1.0, 0.0), materialPersonalizado_verde); // Esfera verde (esquerda)
-    list[3] = new sphere(vec3(1.3, 0.2, 2.3), 0.6, vec3(0.0, 0.0, 1.0), materialPersonalizado_azul);  // Esfera azul (direita)
+    // // Esferas com cores e posições específicas
+    // list[1] = new sphere(vec3(0, 0.2, 3.0), 0.6, vec3(1.0, 0.0, 0.0), materialPersonalizado_vermelho);  // Esfera vermelha (centro)
+    // list[2] = new sphere(vec3(-1.3, 0.2, 0.0), 0.6, vec3(0.0, 1.0, 0.0), materialPersonalizado_verde); // Esfera verde (esquerda)
+    // list[3] = new sphere(vec3(1.3, 0.2, 0.0), 0.6, vec3(0.0, 0.0, 1.0), materialPersonalizado_azul);  // Esfera azul (direita)
   
+    // Material vidro(0.0f, 0.9f, 1.0f, 0.0f, 0.9f, 0.0f, 1.5f, vec3(1.0f, 1.0f, 1.0f));  // Material transparente (Vidro)
 
-    hitable *world = new hitable_list(list, 4);  // Agora temos 9 objetos (planos e esferas)
+    Material materialReflexivo(0.7f, 0.8f, 0.1f, 0.7f, 0.0f, 0.0f, 1.5f, vec3(0.0f, 0.0f, 0.0f));  // Material reflexivo
+    Material materialVermelho(0.6f, 0.8f, 1.0f, 0.3f, 0.0f, 0.7f, 1.0f, vec3(1.0f, 0.0f, 0.0f));  // Esfera Vermelha (opaca)
+
+    // Plano Reflexivo (chão reflexivo)
+    list[0] = new plane(vec3(0, -0.5, 0), vec3(0, 1, 0), vec3(1.0f, 1.0f, 0.0f), materialReflexivo);  // Chão reflexivo (amarelo)
+
+    // Esferas
+    // Esfera Transparente (Vidro) no centro
+    // list[1] = new sphere(vec3(0, 0.2, 3.0), 0.6, vec3(1.0f, 0.0f, 0.0f), vidro);  // Esfera Transparente (Vidro)
+    Material vidro2(0.0f, 0.9f, 1.0f, 0.0f, 0.9f, 0.0f, 1.5f, vec3(1.0f, 1.0f, 1.0f), 2.0f);  // Material transparente (Vidro)
+
+    // Esfera Vermelha dentro da esfera transparente
+    list[1] = new sphere(vec3(0, 0.2, 3.0), 0.4, vec3(1.0f, 0.0f, 0.0f), vidro2);  // Esfera Vermelha (dentro da transparente)
+
+    // Outra esfera azul fora (para exemplo)
+    list[2] = new sphere(vec3(-1.3, 0.2, 0.0), 0.6, vec3(0.0f, 0.0f, 1.0f), materialVermelho);  // Esfera Azul (opaca)
+
+    hitable *world = new hitable_list(list, 3);  // Agora temos 9 objetos (planos e esferas)
 
     // Laço para gerar os pixels da imagem
     for (int j = ny - 1; j >= 0; j--) { 
@@ -360,7 +663,7 @@ void desafio1() {
             // Gera o raio para cada pixel, usando a câmera
             ray r = cam.get_ray(u, v);
             // Calcula a cor para o ponto onde o raio atinge
-            vec3 col = color_with_shadows(r, world, lights,  vec3(0.0, 0.0, 0.0));
+            vec3 col = color_with_shadowsteste(r, world, lights,  vec3(1.0, 1.0, 1.0));
             int ir = int(255.99 * col[0]); 
             int ig = int(255.99 * col[1]); 
             int ib = int(255.99 * col[2]); 
@@ -446,13 +749,30 @@ vec3 color3(const ray& r, hitable *world, const std::vector<light>& lights, cons
     }
 }
 
-    
+
 
 void triangulo_auto(const std::vector<triangle*>& triangles){
 
+    Material vidro(0.1f, 0.0f, 0.1f, 0.9f, 0.5f, 0.2f, 0.0f, vec3(0.9, 0.9, 1.0), 1.5f);  // Vidro
+    Material agua(0.1f, 0.0f, 0.05f, 0.95f, 0.5f, 0.2f, 0.0f, vec3(0.0, 0.5, 1.0), 1.33f); // Água
+    Material diamante(0.1f, 0.0f, 0.2f, 0.9f, 0.7f, 0.2f, 0.0f, vec3(1.0, 1.0, 1.0), 2.42f); // Diamante
+    Material plastico(0.5f, 0.1f, 0.3f, 0.2f, 0.2f, 0.6f, 0.0f, vec3(1.0, 0.0, 0.0), 1.4f); // Plástico
+
+    Material materialReflexivoPreto(
+        0.0f,  // Coeficiente difuso (sem absorção de luz difusa, preto)
+        0.8f,  // Coeficiente especular (ajuste para brilho especular)
+        0.1f,  // Coeficiente ambiental (ajuste para um pouco de brilho ambiente)
+        1.0f,  // Coeficiente de reflexão (permite reflexão total)
+        0.0f,  // Coeficiente de transmissão (não é transparente)
+        0.5f,  // Coeficiente de rugosidade (ajuste o quanto ele é rugoso)
+        1.0f,  // Coeficiente de brilho especular
+        vec3(0.0, 1.0, 1.0), // Cor do material (preto)
+        1.0f   // Índice de refração
+    );
+
     int nx = 500;  // Número de colunas de pixels da imagem
     int ny = 500;  // Número de linhas de pixels da imagem
-    std::ofstream imageFile("desafio_yuumi2.ppm"); // Abre o arquivo para salvar a imagem no formato PPM
+    std::ofstream imageFile("desafio_yuumi_ultima_entrega.ppm"); // Abre o arquivo para salvar a imagem no formato PPM
     imageFile << "P3\n" << nx << " " << ny << "\n255\n"; // Cabeçalho do arquivo PPM: "P3" para cores RGB, tamanho da imagem, valor máximo de cor
     
     // Parâmetros da câmera
@@ -477,16 +797,29 @@ void triangulo_auto(const std::vector<triangle*>& triangles){
     // Cria o material para o plano
     Material materialPersonalizado_amarelo(0.6f, 0.8f, 0.1f, 0.3f, 0.0f, 0.7f, 1.0f, vec3(0.0, 0.0, 1.0));
 
+
+    Material materialReflexivo(
+        0.8f,  // coeficiente de reflexão (80% de reflexão)
+        0.0f,  // coeficiente de transmissão (sem transparência)
+        1.0f,  // cor do material (branco, refletindo tudo)
+        0.5f,  // coeficiente difuso
+        0.5f,  // coeficiente especular
+        1.0f,  // brilho especular (quanto mais alto, mais "brilhante" o reflexo)
+        1.5f,  // índice de refração (não afetará muito já que não há refração aqui)
+        vec3(1.0, 1.0, 1.0) // cor do material (branco)
+    );
+
+
     // Cria o plano e coloca no índice correto do array
-    list[triangles.size()] = new plane(vec3(0, -1.1, 0), vec3(0, 1, 0), vec3(1.0, 1.0, 0.0), materialPersonalizado_amarelo);
+    list[triangles.size()] = new plane(vec3(0, -1.7, 0), vec3(0, 1, 0), vec3(1.0, 1.0, 0.0), materialReflexivo);
 
     // Cria o objeto hitable_list com o tamanho correto (triângulos + 1 plano)
     hitable *world = new hitable_list(list, triangles.size() + 1);
 
     // Criando fontes de luz
-    light l1(vec3(5, 5, 5), vec3(1.0, 1.0, 1.0), 1.0); // Luz branca
-    light l2(vec3(-5, 5, 5), vec3(0.0, 0.0, 0.0), 0.0); // Luz vermelha
-    std::vector<light> lights = {l1, l2}; // Lista de luzes
+    light l1(vec3(0, 5, 5), vec3(1.0, 1.0, 1.0), 1.0); // Luz branca
+    light l2(vec3(-5, 5, 5), vec3(1.0, 0.0, 0.0), 1.0); // Luz vermelha
+    std::vector<light> lights = {l1}; // Lista de luzes
 
 
     // Laço para gerar os pixels da imagem
@@ -497,7 +830,7 @@ void triangulo_auto(const std::vector<triangle*>& triangles){
             // Gera o raio para cada pixel, usando a câmera
             ray r = cam.get_ray(u, v);
             // Calcula a cor para o ponto onde o raio atinge
-            vec3 col = color_with_shadows(r, world, lights, vec3(1.0, 0.0, 0.0));
+            vec3 col = color_with_shadows4(r, world, lights, vec3(0.0, 0.0, 0.0));
             int ir = int(255.99 * col[0]); 
             int ig = int(255.99 * col[1]); 
             int ib = int(255.99 * col[2]); 
@@ -715,7 +1048,13 @@ int main(){
     
 
     mat4 rotation = rotation_matrix_y(M_PI / 4);  
-    mat4 scale = scaling_matrix(0.8);
+    mat4 scale = scaling_matrix(0.0);
+
+    Material vidro(0.1f, 0.0f, 0.1f, 0.9f, 0.5f, 0.2f, 0.0f, vec3(0.9, 0.9, 1.0), 1.5f);  // Vidro
+    Material agua(0.1f, 0.0f, 0.05f, 0.95f, 0.5f, 0.2f, 0.0f, vec3(0.0, 0.5, 1.0), 1.33f); // Água
+    Material diamante(0.1f, 0.0f, 0.2f, 0.9f, 0.7f, 0.2f, 0.0f, vec3(1.0, 1.0, 1.0), 2.42f); // Diamante
+    Material plastico(0.5f, 0.1f, 0.3f, 0.2f, 0.2f, 0.6f, 0.0f, vec3(1.0, 0.0, 0.0), 1.4f); // Plástico
+
     // Itera sobre cada face
     for (const auto& face : faces) {
         if (face.size() >= 3) { 
@@ -724,20 +1063,22 @@ int main(){
                 static_cast<float>(rand()) / RAND_MAX,
                 static_cast<float>(rand()) / RAND_MAX
             );
-            Material materialPersonalizado(0.6f, 0.8f, 0.1f, 0.3f, 0.0f, 0.7f, 1.0f ,vec3(0.0, 1.0, 0.0));
+            Material materialPersonalizado(0.6f, 0.8f, 1.1f, 0.0f, 0.0f, 0.7f, 1.0f ,vec3(0.0, 1.0, 0.0), 1.0f);
             // Aplica a rotação no eixo X a cada vértice
             vec3 v1_rotated = rotation * vec3(face[0].x, face[0].y, face[0].z);
             vec3 v2_rotated = rotation * vec3(face[1].x, face[1].y, face[1].z);
             vec3 v3_rotated = rotation * vec3(face[2].x, face[2].y, face[2].z);
 
+            
+
             triangles.push_back(new triangle(
                 // vec3(face[0].x, face[0].y, face[0].z),
                 // vec3(face[1].x, face[1].y, face[1].z),
                 // vec3(face[2].x, face[2].y, face[2].z),
-                v1_rotated*2,
-                v2_rotated*2,
-                v3_rotated*2,
-                randomColor,
+                v1_rotated*1.5,
+                v2_rotated*1.5,
+                v3_rotated*1.5,
+                randomColor*1.5,
                 materialPersonalizado
             ));
         }
@@ -748,7 +1089,8 @@ int main(){
 
     triangulo_auto(triangles); 
 
-    // desafio1();
+    desafio1();
+
 
     return 0;
 }

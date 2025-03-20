@@ -77,6 +77,7 @@ class vec3 { // criamos essa classe para representar tanto um vetor quanto um po
     static vec3 random(double min, double max) {
         return vec3(random_double(min,max), random_double(min,max), random_double(min,max));
     }
+
 };
 
 
@@ -247,18 +248,24 @@ vec3 normalize(const vec3& v) {
     return v / len;  // Retorna o vetor normalizado
 }
 
-
+// float length(const vec3& v) {
+//     return std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+// }
 
 inline vec3 reflect(const vec3& v, const vec3& n) {
     return v - 2*dot(v,n)*n;
 }
 
-// inline vec3 refract(const vec3& uv, const vec3& n, double etai_over_etat) {
-//     auto cos_theta = std::fmin(dot(-uv, n), 1.0);
-//     vec3 r_out_perp =  etai_over_etat * (uv + cos_theta*n);
-//     vec3 r_out_parallel = -std::sqrt(std::fabs(1.0 - r_out_perp.length_squared())) * n;
-//     return r_out_perp + r_out_parallel;
-// }
+inline vec3 refract(const vec3& uv, const vec3& n, double etai_over_etat) {
+    auto cos_theta = std::fmin(dot(-uv, n), 1.0);
+    vec3 r_out_perp =  etai_over_etat * (uv + cos_theta*n);
+    vec3 r_out_parallel = -std::sqrt(std::fabs(1.0 - r_out_perp.length_squared())) * n;
+    return r_out_perp + r_out_parallel;
+}
+
+float length(const vec3& v) {
+    return std::sqrt(v.x() * v.x() + v.y() * v.y() + v.z() * v.z());
+}
 
 
 #endif
