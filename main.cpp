@@ -152,6 +152,7 @@ vec3 color2(const ray& r, hitable *world) {
 //     std::cerr << "\nFeito.\n";
 //     imageFile.close();
 // }
+
 vec3 color_with_shadows(const ray& r, hitable *world, const std::vector<light>& lights, const vec3& ambient_light) {
     hit_record rec;
     float shadow_attenuation = 0.5;
@@ -182,14 +183,14 @@ vec3 color_with_shadows(const ray& r, hitable *world, const std::vector<light>& 
             if (!in_shadow) {
                 // Iluminação Difusa
                 float diff = std::max(dot(normal, light_dir), 0.0);
-                vec3 diffuse = diff * l.intensity * rec.material.color ;
+                vec3 diffuse = diff * l.intensity * rec.material.color * rec.material.rugosidade;
                 color += diffuse;
             } else {
                 // Se estiver em sombra, aplica o fator de transparência à sombra
                 float diff = std::max(dot(normal, light_dir), 0.0);
                 vec3 diffuse = diff * l.intensity * rec.material.color * shadow_attenuation;
                 color += diffuse; // Adiciona a sombra atenuada
-            }
+             }
         }
 
         return color;
@@ -337,8 +338,8 @@ void desafio1() {
     Material materialPersonalizado_verde(0.6f, 0.8f, 0.1f, 0.3f, 0.0f, 0.7f,1.0f, vec3(0.0, 1.0, 0.0));
     Material materialPersonalizado_azul(0.6f, 0.8f, 0.1f, 0.3f, 0.0f, 0.7f, 1.0f, vec3(0.0, 0.0, 1.0));
     // Criando fontes de luz
-    light l1(vec3(5, 5, 5), vec3(1.0, 1.0, 1.0), 1.0); // Luz branca
-    light l2(vec3(-5, 5, 5), vec3(1.0, 0.0, 0.0), 0.0); // Luz vermelha
+    light l1(vec3(5, 5, 5), vec3(1.0, 1.0, 1.0), 0.0); // Luz branca
+    light l2(vec3(-5, 5, 5), vec3(1.0, 0.0, 0.0), 1.0); // Luz vermelha
     std::vector<light> lights = {l1, l2}; // Lista de luzes
     // Planos
     list[0] = new plane(vec3(0, -0.5, 0), vec3(0, 1, 0), vec3(1.0, 1.0, 0.0), materialPersonalizado_amarelo);  // Plano (chão) amarelo
@@ -451,7 +452,7 @@ void triangulo_auto(const std::vector<triangle*>& triangles){
 
     int nx = 500;  // Número de colunas de pixels da imagem
     int ny = 500;  // Número de linhas de pixels da imagem
-    std::ofstream imageFile("triangulo_auto_transformation.ppm"); // Abre o arquivo para salvar a imagem no formato PPM
+    std::ofstream imageFile("desafio_yuumi2.ppm"); // Abre o arquivo para salvar a imagem no formato PPM
     imageFile << "P3\n" << nx << " " << ny << "\n255\n"; // Cabeçalho do arquivo PPM: "P3" para cores RGB, tamanho da imagem, valor máximo de cor
     
     // Parâmetros da câmera
@@ -474,7 +475,7 @@ void triangulo_auto(const std::vector<triangle*>& triangles){
     }
 
     // Cria o material para o plano
-    Material materialPersonalizado_amarelo(0.6f, 0.8f, 0.1f, 0.3f, 0.0f, 0.7f, 1.0f, vec3(1.0, 1.0, 0.0));
+    Material materialPersonalizado_amarelo(0.6f, 0.8f, 0.1f, 0.3f, 0.0f, 0.7f, 1.0f, vec3(0.0, 0.0, 1.0));
 
     // Cria o plano e coloca no índice correto do array
     list[triangles.size()] = new plane(vec3(0, -1.1, 0), vec3(0, 1, 0), vec3(1.0, 1.0, 0.0), materialPersonalizado_amarelo);
@@ -484,7 +485,7 @@ void triangulo_auto(const std::vector<triangle*>& triangles){
 
     // Criando fontes de luz
     light l1(vec3(5, 5, 5), vec3(1.0, 1.0, 1.0), 1.0); // Luz branca
-    light l2(vec3(-5, 5, 5), vec3(1.0, 0.0, 0.0), 0.0); // Luz vermelha
+    light l2(vec3(-5, 5, 5), vec3(0.0, 0.0, 0.0), 0.0); // Luz vermelha
     std::vector<light> lights = {l1, l2}; // Lista de luzes
 
 
@@ -496,7 +497,7 @@ void triangulo_auto(const std::vector<triangle*>& triangles){
             // Gera o raio para cada pixel, usando a câmera
             ray r = cam.get_ray(u, v);
             // Calcula a cor para o ponto onde o raio atinge
-            vec3 col = color_with_shadows(r, world, lights, vec3(0.5, 0.0, 0.0));
+            vec3 col = color_with_shadows(r, world, lights, vec3(1.0, 0.0, 0.0));
             int ir = int(255.99 * col[0]); 
             int ig = int(255.99 * col[1]); 
             int ib = int(255.99 * col[2]); 
@@ -701,7 +702,7 @@ void triangulo_auto(const std::vector<triangle*>& triangles){
 
 int main(){
 
-    objReader obj("inputs/untitled.obj");
+    objReader obj("inputs/cubo.obj");
     obj.print_faces();
    
     
@@ -713,7 +714,7 @@ int main(){
 
     
 
-    mat4 rotation = rotation_matrix_y(M_PI / 6);  
+    mat4 rotation = rotation_matrix_y(M_PI / 4);  
     mat4 scale = scaling_matrix(0.8);
     // Itera sobre cada face
     for (const auto& face : faces) {
