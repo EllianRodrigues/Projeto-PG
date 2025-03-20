@@ -525,7 +525,6 @@ vec3 color_with_shadows4(const ray& r, hitable *world, const std::vector<light>&
 
 
 
-
 vec3 color_with_shadowsteste(const ray& r, hitable *world, const std::vector<light>& lights, vec3 ambient_light, int depth = 5) {
     if (depth <= 0) return vec3(0, 0, 0);  // Evita chamadas infinitas
 
@@ -592,6 +591,9 @@ vec3 color_with_shadowsteste(const ray& r, hitable *world, const std::vector<lig
 
 
 
+
+
+
 void desafio1() {
     int nx = 500;  // Número de colunas de pixels da imagem
     int ny = 500;  // Número de linhas de pixels da imagem
@@ -616,7 +618,7 @@ void desafio1() {
     Material materialPersonalizado_azul(0.6f, 0.8f, 0.1f, 0.3f, 0.0f, 0.7f, 1.0f, vec3(0.0, 0.0, 1.0));
 
 
-     Material vidro(0.1f, 0.0f, 0.1f, 0.9f, 0.5f, 0.2f, 0.0f, vec3(0.9, 0.9, 1.0), 1.5f);  // Vidro
+    Material vidro(0.1f, 0.0f, 0.1f, 0.9f, 0.5f, 0.2f, 0.0f, vec3(0.9, 0.9, 1.0), 1.5f);  // Vidro
     Material agua(0.1f, 0.0f, 0.05f, 0.95f, 0.5f, 0.2f, 0.0f, vec3(0.0, 0.5, 1.0), 1.33f); // Água
     Material diamante(0.1f, 0.0f, 0.2f, 0.9f, 0.7f, 0.2f, 0.0f, vec3(1.0, 1.0, 1.0), 2.42f); // Diamante
     Material plastico(0.5f, 0.1f, 0.3f, 0.2f, 0.2f, 0.6f, 0.0f, vec3(1.0, 0.0, 0.0), 1.4f); // Plástico
@@ -639,21 +641,30 @@ void desafio1() {
     Material materialReflexivo(0.7f, 0.8f, 0.1f, 0.7f, 0.0f, 0.0f, 1.5f, vec3(0.0f, 0.0f, 0.0f));  // Material reflexivo
     Material materialVermelho(0.6f, 0.8f, 1.0f, 0.3f, 0.0f, 0.7f, 1.0f, vec3(1.0f, 0.0f, 0.0f));  // Esfera Vermelha (opaca)
 
+    Material azul(0.6f, 0.8f, 1.0f, 0.3f, 0.0f, 0.7f, 1.0f, vec3(0.0f, 0.0f, 1.0f));  // Esfera Vermelha (opaca)
+
+
+    Material vidro2(0.1f, 0.0f, 0.1f, 0.1f, 0.1f, 0.2f, 0.0f, vec3(1.0, 1.0, 1.0), 1.0f);  // Vidro (transparente)
+    Material vidro3(0.1f, 0.0f, 0.1f, 0.2f, 0.9f, 0.2f, 0.0f, vec3(1.0, 1.0, 1.0), 1.5f);  // Vidro (transparente com alta transmissão)
+
+
     // Plano Reflexivo (chão reflexivo)
     list[0] = new plane(vec3(0, -0.5, 0), vec3(0, 1, 0), vec3(1.0f, 1.0f, 0.0f), materialReflexivo);  // Chão reflexivo (amarelo)
-
+    
     // Esferas
     // Esfera Transparente (Vidro) no centro
-    // list[1] = new sphere(vec3(0, 0.2, 3.0), 0.6, vec3(1.0f, 0.0f, 0.0f), vidro);  // Esfera Transparente (Vidro)
-    Material vidro2(0.0f, 0.9f, 1.0f, 0.0f, 0.9f, 0.0f, 1.5f, vec3(1.0f, 1.0f, 1.0f), 2.0f);  // Material transparente (Vidro)
+    list[1] = new sphere(vec3(0, 0.2, 3.0), 0.6, vec3(1.0f, 0.0f, 0.0f), vidro3);  // Esfera Transparente (Vidro)
 
     // Esfera Vermelha dentro da esfera transparente
-    list[1] = new sphere(vec3(0, 0.2, 3.0), 0.4, vec3(1.0f, 0.0f, 0.0f), vidro2);  // Esfera Vermelha (dentro da transparente)
+    list[2] = new sphere(vec3(0, 0.2, 2.0), 0.4, vec3(1.0f, 0.0f, 0.0f), materialVermelho);  // Esfera Vermelha (dentro da transparente)
 
     // Outra esfera azul fora (para exemplo)
-    list[2] = new sphere(vec3(-1.3, 0.2, 0.0), 0.6, vec3(0.0f, 0.0f, 1.0f), materialVermelho);  // Esfera Azul (opaca)
+    list[3] = new sphere(vec3(-1.3, 0.2, 0.0), 0.6, vec3(0.0f, 0.0f, 1.0f), materialVermelho);  // Esfera Azul (opaca)
 
-    hitable *world = new hitable_list(list, 3);  // Agora temos 9 objetos (planos e esferas)
+    // list[4] = new plane(vec3(-0.7, 0.0, 0.0), vec3(1.0, 0.0, 0.0), vec3(0.5f, 0.5f, 0.5f), azul);  
+
+
+    hitable *world = new hitable_list(list, 4);  // Agora temos 9 objetos (planos e esferas)
 
     // Laço para gerar os pixels da imagem
     for (int j = ny - 1; j >= 0; j--) { 
@@ -812,6 +823,7 @@ void triangulo_auto(const std::vector<triangle*>& triangles){
 
     // Cria o plano e coloca no índice correto do array
     list[triangles.size()] = new plane(vec3(0, -1.7, 0), vec3(0, 1, 0), vec3(1.0, 1.0, 0.0), materialReflexivo);
+
 
     // Cria o objeto hitable_list com o tamanho correto (triângulos + 1 plano)
     hitable *world = new hitable_list(list, triangles.size() + 1);
