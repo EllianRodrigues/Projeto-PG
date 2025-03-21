@@ -156,376 +156,387 @@ vec3 color2(const ray& r, hitable *world) {
 // }
 
 
-vec3 color_with_shadows3(const ray& r, hitable *world, const std::vector<light>& lights, vec3 ambient_light, int depth = 5) {
-    if (depth <= 0) return vec3(0, 0, 0);  // Evita chamadas infinitas
+// vec3 color_with_shadows3(const ray& r, hitable *world, const std::vector<light>& lights, vec3 ambient_light, int depth = 5) {
+//     if (depth <= 0) return vec3(0, 0, 0);  // Evita chamadas infinitas
 
-    hit_record rec;
-    if (world->hit(r, 0.001f, FLT_MAX, rec)) {
-        vec3 final_color(0, 0, 0);
-        vec3 normal = rec.normal;
-        vec3 view_dir = normalize(-r.direction());  // Direção do observador
-        Material material = rec.material;
+//     hit_record rec;
+//     if (world->hit(r, 0.001f, FLT_MAX, rec)) {
+//         vec3 final_color(0, 0, 0);
+//         vec3 normal = rec.normal;
+//         vec3 view_dir = normalize(-r.direction());  // Direção do observador
+//         Material material = rec.material;
 
-        // Reflexão e refração com Fresnel
-        float fresnel = pow(1.0f - fabs(dot(view_dir, normal)), 5.0f);
-        float reflectance = material.reflexao + (1.0f - material.reflexao) * fresnel;
+//         // Reflexão e refração com Fresnel
+//         float fresnel = pow(1.0f - fabs(dot(view_dir, normal)), 5.0f);
+//         float reflectance = material.reflexao + (1.0f - material.reflexao) * fresnel;
 
-        vec3 reflected_color(0, 0, 0);
-        vec3 refracted_color(0, 0, 0);
+//         vec3 reflected_color(0, 0, 0);
+//         vec3 refracted_color(0, 0, 0);
 
-        // Reflexão
-        if (material.reflexao > 0.0f) {
-            vec3 reflected_dir = reflect(r.direction(), normal);
-            ray reflected_ray(rec.p + reflected_dir * 0.001f, reflected_dir);
-            reflected_color = color_with_shadows3(reflected_ray, world, lights, ambient_light, depth - 1);
-        }
+//         // Reflexão
+//         if (material.reflexao > 0.0f) {
+//             vec3 reflected_dir = reflect(r.direction(), normal);
+//             ray reflected_ray(rec.p + reflected_dir * 0.001f, reflected_dir);
+//             reflected_color = color_with_shadows3(reflected_ray, world, lights, ambient_light, depth - 1);
+//         }
 
-        // Refração
-        if (material.transmissao > 0.0f) {
-            float eta = (dot(view_dir, normal) > 0) ? material.ior : (1.0f / material.ior);
-            vec3 refracted_dir = refract(r.direction(), normal, eta);
-            if (length(refracted_dir) > 0) { 
-                ray refracted_ray(rec.p + refracted_dir * 0.001f, refracted_dir);
-                refracted_color = color_with_shadows3(refracted_ray, world, lights, ambient_light, depth - 1);
-            }
-        }
+//         if (material.transmissao > 0.0f) {
+//             vec3 refracted_dir;
+//             float ni_over_nt = (dot(view_dir, normal) > 0) ? material.ior : (1.0f / material.ior);
+        
+//             if (refract(r.direction(), normal, ni_over_nt, refracted_dir)) {
+//                 ray refracted_ray(rec.p + refracted_dir * 0.001f, refracted_dir);
+//                 refracted_color = color_with_shadowsteste(refracted_ray, world, lights, ambient_light, depth - 1);
+//             } else {
+//                 // Reflexão total interna
+//                 refracted_color = vec3(0, 0, 0);
+//             }
+//         }
 
-        // Mistura entre reflexão e refração
-        final_color += reflectance * reflected_color + (1.0f - reflectance) * refracted_color;
+//         // Mistura entre reflexão e refração
+//         final_color += reflectance * reflected_color + (1.0f - reflectance) * refracted_color;
 
-        // Iluminação direta
-        for (const auto& light : lights) {
-            vec3 light_dir = normalize(light.position - rec.p);
-            vec3 half_vector = normalize(light_dir + view_dir);
-            float diff = std::max(float(dot(normal, light_dir)), 0.0f);
-            float spec = pow(std::max(float(dot(normal, half_vector)), 0.0f), material.shininess);
+//         // Iluminação direta
+//         for (const auto& light : lights) {
+//             vec3 light_dir = normalize(light.position - rec.p);
+//             vec3 half_vector = normalize(light_dir + view_dir);
+//             float diff = std::max(float(dot(normal, light_dir)), 0.0f);
+//             float spec = pow(std::max(float(dot(normal, half_vector)), 0.0f), material.shininess);
 
-            // Verificação de sombra
-            ray shadow_ray(rec.p + normal * 0.001f, light_dir);  // Raio para verificar se a luz é bloqueada
-            hit_record shadow_rec;
-            if (world->hit(shadow_ray, 0.001f, FLT_MAX, shadow_rec)) {
-                continue;  // Se o raio de sombra bate em algo, a luz é bloqueada
-            }
+//             // Verificação de sombra
+//             ray shadow_ray(rec.p + normal * 0.001f, light_dir);  // Raio para verificar se a luz é bloqueada
+//             hit_record shadow_rec;
+//             if (world->hit(shadow_ray, 0.001f, FLT_MAX, shadow_rec)) {
+//                 continue;  // Se o raio de sombra bate em algo, a luz é bloqueada
+//             }
 
-            // Cálculos de difuso e especular
-            vec3 diffuse = material.color * diff * material.difuso * light.color;
-            vec3 specular = vec3(1.0, 1.0, 1.0) * spec * material.especular * light.color;
+//             // Cálculos de difuso e especular
+//             vec3 diffuse = material.color * diff * material.difuso * light.color;
+//             vec3 specular = vec3(1.0, 1.0, 1.0) * spec * material.especular * light.color;
 
-            final_color += diffuse + specular;
-        }
+//             final_color += diffuse + specular;
+//         }
 
-        // Adiciona luz ambiente
-        final_color += ambient_light * material.color * material.ambiental;
+//         // Adiciona luz ambiente
+//         final_color += ambient_light * material.color * material.ambiental;
 
-        return final_color;
-    }
-    return vec3(0, 0, 0);
-}
-
-
+//         return final_color;
+//     }
+//     return vec3(0, 0, 0);
+// }
 
 
-vec3 color_with_shadows2(const ray& r, hitable *world, const std::vector<light>& lights, vec3 ambient_light, int depth = 5) {
-    if (depth <= 0) return vec3(0, 0, 0);  // Evita chamadas infinitas
 
-    hit_record rec;
-    if (world->hit(r, 0.001f, FLT_MAX, rec)) {
-        vec3 final_color(0, 0, 0);
-        vec3 normal = rec.normal;
-        vec3 view_dir = normalize(-r.direction());  // Direção do observador
-        Material material = rec.material;
 
-        // Reflexão e refração com Fresnel
-        float fresnel = pow(1.0f - fabs(dot(view_dir, normal)), 5.0f);
-        float reflectance = material.reflexao + (1.0f - material.reflexao) * fresnel;
+// vec3 color_with_shadows2(const ray& r, hitable *world, const std::vector<light>& lights, vec3 ambient_light, int depth = 5) {
+//     if (depth <= 0) return vec3(0, 0, 0);  // Evita chamadas infinitas
 
-        vec3 reflected_color(0, 0, 0);
-        vec3 refracted_color(0, 0, 0);
+//     hit_record rec;
+//     if (world->hit(r, 0.001f, FLT_MAX, rec)) {
+//         vec3 final_color(0, 0, 0);
+//         vec3 normal = rec.normal;
+//         vec3 view_dir = normalize(-r.direction());  // Direção do observador
+//         Material material = rec.material;
 
-        // Reflexão
-        if (material.reflexao > 0.0f) {
-            vec3 reflected_dir = reflect(r.direction(), normal);
-            ray reflected_ray(rec.p + reflected_dir * 0.001f, reflected_dir);
-            reflected_color = color_with_shadows2(reflected_ray, world, lights, ambient_light, depth - 1);
-        }
+//         // Reflexão e refração com Fresnel
+//         float fresnel = pow(1.0f - fabs(dot(view_dir, normal)), 5.0f);
+//         float reflectance = material.reflexao + (1.0f - material.reflexao) * fresnel;
 
-        // Refração
-        if (material.transmissao > 0.0f) {
-            float eta = (dot(view_dir, normal) > 0) ? material.ior : (1.0f / material.ior);
-            vec3 refracted_dir = refract(r.direction(), normal, eta);
-            if (length(refracted_dir) > 0) { 
-                ray refracted_ray(rec.p + refracted_dir * 0.001f, refracted_dir);
-                refracted_color = color_with_shadows2(refracted_ray, world, lights, ambient_light, depth - 1);
-            }
-        }
+//         vec3 reflected_color(0, 0, 0);
+//         vec3 refracted_color(0, 0, 0);
 
-        // Mistura entre reflexão e refração
-        final_color += reflectance * reflected_color + (1.0f - reflectance) * refracted_color;
+//         // Reflexão
+//         if (material.reflexao > 0.0f) {
+//             vec3 reflected_dir = reflect(r.direction(), normal);
+//             ray reflected_ray(rec.p + reflected_dir * 0.001f, reflected_dir);
+//             reflected_color = color_with_shadows2(reflected_ray, world, lights, ambient_light, depth - 1);
+//         }
 
-        // Iluminação direta
-        for (const auto& light : lights) {
-            vec3 light_dir = normalize(light.position - rec.p);
-            vec3 half_vector = normalize(light_dir + view_dir);
-            float diff = std::max(float(dot(normal, light_dir)), 0.0f);
-            float spec = pow(std::max(float(dot(normal, half_vector)), 0.0f), material.shininess);
+//         // Refração
+//         if (material.transmissao > 0.0f) {
+//             vec3 refracted_dir;
+//             float ni_over_nt = (dot(view_dir, normal) > 0) ? material.ior : (1.0f / material.ior);
+        
+//             if (refract(r.direction(), normal, ni_over_nt, refracted_dir)) {
+//                 ray refracted_ray(rec.p + refracted_dir * 0.001f, refracted_dir);
+//                 refracted_color = color_with_shadowsteste(refracted_ray, world, lights, ambient_light, depth - 1);
+//             } else {
+//                 // Reflexão total interna
+//                 refracted_color = vec3(0, 0, 0);
+//             }
+//         }
+
+//         // Mistura entre reflexão e refração
+//         final_color += reflectance * reflected_color + (1.0f - reflectance) * refracted_color;
+
+//         // Iluminação direta
+//         for (const auto& light : lights) {
+//             vec3 light_dir = normalize(light.position - rec.p);
+//             vec3 half_vector = normalize(light_dir + view_dir);
+//             float diff = std::max(float(dot(normal, light_dir)), 0.0f);
+//             float spec = pow(std::max(float(dot(normal, half_vector)), 0.0f), material.shininess);
             
-            vec3 diffuse = material.color * diff * material.difuso * light.color;
-            vec3 specular = vec3(1.0, 1.0, 1.0) * spec * material.especular * light.color;
+//             vec3 diffuse = material.color * diff * material.difuso * light.color;
+//             vec3 specular = vec3(1.0, 1.0, 1.0) * spec * material.especular * light.color;
             
-            final_color += diffuse + specular;
-        }
+//             final_color += diffuse + specular;
+//         }
 
-        // Adiciona luz ambiente
-        final_color += ambient_light * material.color * material.ambiental;
+//         // Adiciona luz ambiente
+//         final_color += ambient_light * material.color * material.ambiental;
 
-        return final_color;
-    }
-    return vec3(0, 0, 0);
-}
-
-
-
-
-vec3 color_with_shadows(const ray& r, hitable *world, const std::vector<light>& lights, const vec3& ambient_light) {
-    hit_record rec;
-    float shadow_attenuation = 0.5;
-    if (world->hit(r, 0.0, FLT_MAX, rec)) {
-        vec3 color = vec3(0.0, 0.0, 0.0);
-
-        // Componente de Iluminação Ambiente
-        color += ambient_light * rec.material.color; // A cor do material é multiplicada pela luz ambiente
-
-        // Calculando a iluminação difusa e especular
-        for (const auto& l : lights) {
-            // Direção da luz
-            vec3 light_dir = normalize(l.position - rec.p);
-            // Normal no ponto de interseção
-            vec3 normal = rec.normal;
-
-            // Verificando se o ponto está em sombra
-            // Criando um raio de sombra a partir do ponto de interseção
-            vec3 shadow_origin = rec.p + normal * 0.001; // Um pequeno deslocamento para evitar que o raio se cruze com o ponto de interseção
-            ray shadow_ray(shadow_origin, light_dir);
-
-            // Verifica se o raio de sombra atinge outro objeto
-            hit_record shadow_rec;
-            float dist = sqrt(dot(l.position - rec.p, l.position - rec.p));
-            bool in_shadow = world->hit(shadow_ray, 0.001, dist - 0.001, shadow_rec);
-
-            // Se não estiver em sombra, calcula a iluminação difusa
-            if (!in_shadow) {
-                // Iluminação Difusa
-                float diff = std::max(dot(normal, light_dir), 0.0);
-                vec3 diffuse = diff * l.intensity * rec.material.color * rec.material.rugosidade;
-                color += diffuse;
-            } else {
-                // Se estiver em sombra, aplica o fator de transparência à sombra
-                float diff = std::max(dot(normal, light_dir), 0.0);
-                vec3 diffuse = diff * l.intensity * rec.material.color * shadow_attenuation;
-                color += diffuse; // Adiciona a sombra atenuada
-             }
-        }
-
-        return color;
-    } else {
-        // Se não houver interseção, retorna a cor do fundo
-        vec3 unit_direction = unit_vector(r.direction());
-        float t = 0.5 * (unit_direction.y() + 1.0);
-        return (1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
-    }
-}
+//         return final_color;
+//     }
+//     return vec3(0, 0, 0);
+// }
 
 
 
 
-vec3 color_shadow(const ray& r, hitable *world, const std::vector<light>& lights, const vec3& ambient_light) {
-    hit_record rec;
-    if (world->hit(r, 0.0, FLT_MAX, rec)) {
-        vec3 color = vec3(0.0, 0.0, 0.0);
+// vec3 color_with_shadows(const ray& r, hitable *world, const std::vector<light>& lights, const vec3& ambient_light) {
+//     hit_record rec;
+//     float shadow_attenuation = 0.5;
+//     if (world->hit(r, 0.0, FLT_MAX, rec)) {
+//         vec3 color = vec3(0.0, 0.0, 0.0);
 
-        // Componente de Iluminação Ambiente
-        color += ambient_light * rec.material.color; // A cor do material é multiplicada pela luz ambiente
+//         // Componente de Iluminação Ambiente
+//         color += ambient_light * rec.material.color; // A cor do material é multiplicada pela luz ambiente
 
-        // Calculando a iluminação difusa e especular
-        for (const auto& l : lights) {
-            // Direção da luz
-            vec3 light_dir = normalize(l.position - rec.p);
-            // Normal no ponto de interseção
-            vec3 normal = rec.normal;
+//         // Calculando a iluminação difusa e especular
+//         for (const auto& l : lights) {
+//             // Direção da luz
+//             vec3 light_dir = normalize(l.position - rec.p);
+//             // Normal no ponto de interseção
+//             vec3 normal = rec.normal;
 
-            // Iluminação Difusa (Luz incidente)
-            float diff = std::max(dot(normal, light_dir), 0.0);
-            vec3 diffuse = diff * l.intensity * rec.material.color;
+//             // Verificando se o ponto está em sombra
+//             // Criando um raio de sombra a partir do ponto de interseção
+//             vec3 shadow_origin = rec.p + normal * 0.001; // Um pequeno deslocamento para evitar que o raio se cruze com o ponto de interseção
+//             ray shadow_ray(shadow_origin, light_dir);
 
-            // Iluminação Especular
-            vec3 view_dir = normalize(r.origin() - rec.p); // Direção do observador (raio)
-            vec3 reflect_dir = reflect(-light_dir, normal); // Vetor refletido
-            float spec = pow(std::max(dot(view_dir, reflect_dir), 0.0), rec.material.shininess);
-            vec3 specular = spec * l.intensity * vec3(1.0, 1.0, 1.0); // Cor da luz especular (branca)
+//             // Verifica se o raio de sombra atinge outro objeto
+//             hit_record shadow_rec;
+//             float dist = sqrt(dot(l.position - rec.p, l.position - rec.p));
+//             bool in_shadow = world->hit(shadow_ray, 0.001, dist - 0.001, shadow_rec);
 
-            // Acumulando a cor final
-            color += diffuse + specular;
-        }
+//             // Se não estiver em sombra, calcula a iluminação difusa
+//             if (!in_shadow) {
+//                 // Iluminação Difusa
+//                 float diff = std::max(dot(normal, light_dir), 0.0);
+//                 vec3 diffuse = diff * l.intensity * rec.material.color * rec.material.rugosidade;
+//                 color += diffuse;
+//             } else {
+//                 // Se estiver em sombra, aplica o fator de transparência à sombra
+//                 float diff = std::max(dot(normal, light_dir), 0.0);
+//                 vec3 diffuse = diff * l.intensity * rec.material.color * shadow_attenuation;
+//                 color += diffuse; // Adiciona a sombra atenuada
+//              }
+//         }
 
-        return color;
-    }
-    else {
-        // Se não houver interseção, retorna a cor do fundo
-        vec3 unit_direction = unit_vector(r.direction());
-        float t = 0.5 * (unit_direction.y() + 1.0);
-        return (1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
-    }
-}
-
-
-
-vec3 color5(const ray& r, hitable *world, const std::vector<light>& lights, const vec3& ambient_light) {
-    hit_record rec;
-    if (world->hit(r, 0.0, FLT_MAX, rec)) {
-        vec3 color = vec3(0.0, 0.0, 0.0);
-
-        // Componente de Iluminação Ambiente
-        color += ambient_light * rec.material.ambiental * rec.material.color; // Luz ambiente multiplicada pelo coeficiente ambiental do material
-
-        // Calculando a iluminação difusa e especular
-        for (const auto& l : lights) {
-            // Direção da luz
-            vec3 light_dir = normalize(l.position - rec.p);
-            // Normal no ponto de interseção
-            vec3 normal = rec.normal;
-
-            // Iluminação Difusa (Luz incidente)
-            float diff = std::max(dot(normal, light_dir), 0.0);
-            vec3 diffuse = diff * l.intensity * rec.material.difuso * rec.material.color; // Difusa com coeficiente difuso do material
-
-            // Iluminação Especular
-            vec3 view_dir = normalize(r.origin() - rec.p); // Direção do observador (raio)
-            vec3 reflect_dir = reflect(-light_dir, normal); // Vetor refletido
-            float spec = pow(std::max(dot(view_dir, reflect_dir), 0.0), rec.material.rugosidade);
-            vec3 specular = spec * l.intensity * rec.material.especular * vec3(1.0, 1.0, 1.0); // Cor da luz especular (branca)
-
-            // Acumulando a cor final
-            color += diffuse + specular;
-        }
-
-        return color;
-    }
-    else {
-        // Se não houver interseção, retorna a cor do fundo
-        vec3 unit_direction = unit_vector(r.direction());
-        float t = 0.5 * (unit_direction.y() + 1.0);
-        return (1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
-    }
-}
+//         return color;
+//     } else {
+//         // Se não houver interseção, retorna a cor do fundo
+//         vec3 unit_direction = unit_vector(r.direction());
+//         float t = 0.5 * (unit_direction.y() + 1.0);
+//         return (1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
+//     }
+// }
 
 
 
-vec3 color4(const ray& r, hitable *world, const std::vector<light>& lights) {
-    hit_record rec; // Estrutura para armazenar as informações sobre o ponto de interseção
-    if (world->hit(r, 0.0, FLT_MAX, rec)) { // Verifica se o raio atinge algum objeto no mundo
-        // Se o raio atinge um objeto, vamos calcular a cor do ponto de interseção
-        vec3 color = rec.cor;  // Cor base do objeto (assumindo que o objeto tem uma cor própria)
 
-        // Para cada luz na cena, calculamos a iluminação
-        for (const auto& l : lights) {
-            // Vetor que vai da superfície até a posição da luz
-            vec3 light_dir = normalize(l.position - rec.p); // Posição da luz - Ponto de interseção
+// vec3 color_shadow(const ray& r, hitable *world, const std::vector<light>& lights, const vec3& ambient_light) {
+//     hit_record rec;
+//     if (world->hit(r, 0.0, FLT_MAX, rec)) {
+//         vec3 color = vec3(0.0, 0.0, 0.0);
 
-            // Produto escalar entre o vetor normal e a direção da luz (Lambertian)
-            float diff = std::max(0.0f, static_cast<float>(dot(rec.normal, light_dir)));
+//         // Componente de Iluminação Ambiente
+//         color += ambient_light * rec.material.color; // A cor do material é multiplicada pela luz ambiente
 
-            // Intensidade da luz na cor do objeto
-            color += diff * l.intensity * l.color; // Modificar a cor do objeto pela intensidade da luz
-        }
+//         // Calculando a iluminação difusa e especular
+//         for (const auto& l : lights) {
+//             // Direção da luz
+//             vec3 light_dir = normalize(l.position - rec.p);
+//             // Normal no ponto de interseção
+//             vec3 normal = rec.normal;
 
-        // Retorna a cor final após iluminação
-        return color;
-    }
-    else {
-        // Se o raio não atingir nenhum objeto, gera uma cor de fundo (gradiente de azul)
-        vec3 unit_direction = unit_vector(r.direction()); // Normaliza a direção do raio
-        float t = 0.5 * (unit_direction.y() + 1.0); // Calcula um valor 't' baseado na direção Y
-        // Retorna um gradiente entre branco (1.0, 1.0, 1.0) e azul claro (0.5, 0.7, 1.0)
-        return (1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
-    }
-}
+//             // Iluminação Difusa (Luz incidente)
+//             float diff = std::max(dot(normal, light_dir), 0.0);
+//             vec3 diffuse = diff * l.intensity * rec.material.color;
 
-vec3 color_with_shadows4(const ray& r, hitable *world, const std::vector<light>& lights, vec3 ambient_light, int depth = 5) {
-    if (depth <= 0) return vec3(0, 0, 0);  // Evita chamadas infinitas
+//             // Iluminação Especular
+//             vec3 view_dir = normalize(r.origin() - rec.p); // Direção do observador (raio)
+//             vec3 reflect_dir = reflect(-light_dir, normal); // Vetor refletido
+//             float spec = pow(std::max(dot(view_dir, reflect_dir), 0.0), rec.material.shininess);
+//             vec3 specular = spec * l.intensity * vec3(1.0, 1.0, 1.0); // Cor da luz especular (branca)
 
-    hit_record rec;
-    if (world->hit(r, 0.001f, FLT_MAX, rec)) {
-        vec3 final_color(0, 0, 0);
-        vec3 normal = rec.normal;
-        vec3 view_dir = normalize(-r.direction());  // Direção do observador
-        Material material = rec.material;
+//             // Acumulando a cor final
+//             color += diffuse + specular;
+//         }
 
-        // Reflexão e refração com Fresnel
-        float fresnel = pow(1.0f - fabs(dot(view_dir, normal)), 5.0f);
-        float reflectance = material.reflexao + (1.0f - material.reflexao) * fresnel;
-
-        vec3 reflected_color(0, 0, 0);
-        vec3 refracted_color(0, 0, 0);
-
-        // Reflexão
-        if (material.reflexao > 0.0f) {
-            vec3 reflected_dir = reflect(r.direction(), normal);
-            ray reflected_ray(rec.p + reflected_dir * 0.001f, reflected_dir);
-            reflected_color = color_with_shadows4(reflected_ray, world, lights, ambient_light, depth - 1);
-        }
-
-        // Refração
-        if (material.transmissao > 0.0f) {
-            float eta = (dot(view_dir, normal) > 0) ? material.ior : (1.0f / material.ior);
-            vec3 refracted_dir = refract(r.direction(), normal, eta);
-            if (length(refracted_dir) > 0) { 
-                ray refracted_ray(rec.p + refracted_dir * 0.001f, refracted_dir);
-                refracted_color = color_with_shadows4(refracted_ray, world, lights, ambient_light, depth - 1);
-            }
-        }
-
-        // Mistura entre reflexão e refração
-        // A refração deve ser usada diretamente para materiais transparentes
-        if (material.transmissao > 0.0f) {
-            // Para materiais transparentes, a cor refratada deve ser ponderada pela transparência
-            final_color += (1.0f - material.transmissao) * reflected_color + material.transmissao * refracted_color;
-        } else {
-            // Caso contrário, mistura entre reflexão e refração normal
-            final_color += reflectance * reflected_color + (1.0f - reflectance) * refracted_color;
-        }
-
-        // Iluminação direta
-        for (const auto& light : lights) {
-            vec3 light_dir = normalize(light.position - rec.p);
-            vec3 half_vector = normalize(light_dir + view_dir);
-            float diff = std::max(float(dot(normal, light_dir)), 0.0f);
-            float spec = pow(std::max(float(dot(normal, half_vector)), 0.0f), material.shininess);
-
-            // Verificação de sombra
-            ray shadow_ray(rec.p + normal * 0.001f, light_dir);  // Raio para verificar se a luz é bloqueada
-            hit_record shadow_rec;
-            if (world->hit(shadow_ray, 0.001f, FLT_MAX, shadow_rec)) {
-                continue;  // Se o raio de sombra bate em algo, a luz é bloqueada
-            }
-
-            // Cálculos de difuso e especular
-            vec3 diffuse = material.color * diff * material.difuso * light.color;
-            vec3 specular = vec3(1.0, 1.0, 1.0) * spec * material.especular * light.color;
-
-            final_color += diffuse + specular;
-        }
-
-        // Adiciona luz ambiente
-        final_color += ambient_light * material.color * material.ambiental;
-
-        return final_color;
-    }
-    return vec3(0, 0, 0);
-}
+//         return color;
+//     }
+//     else {
+//         // Se não houver interseção, retorna a cor do fundo
+//         vec3 unit_direction = unit_vector(r.direction());
+//         float t = 0.5 * (unit_direction.y() + 1.0);
+//         return (1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
+//     }
+// }
 
 
 
-vec3 color_with_shadowsteste(const ray& r, hitable *world, const std::vector<light>& lights, vec3 ambient_light, int depth = 5) {
+// vec3 color5(const ray& r, hitable *world, const std::vector<light>& lights, const vec3& ambient_light) {
+//     hit_record rec;
+//     if (world->hit(r, 0.0, FLT_MAX, rec)) {
+//         vec3 color = vec3(0.0, 0.0, 0.0);
+
+//         // Componente de Iluminação Ambiente
+//         color += ambient_light * rec.material.ambiental * rec.material.color; // Luz ambiente multiplicada pelo coeficiente ambiental do material
+
+//         // Calculando a iluminação difusa e especular
+//         for (const auto& l : lights) {
+//             // Direção da luz
+//             vec3 light_dir = normalize(l.position - rec.p);
+//             // Normal no ponto de interseção
+//             vec3 normal = rec.normal;
+
+//             // Iluminação Difusa (Luz incidente)
+//             float diff = std::max(dot(normal, light_dir), 0.0);
+//             vec3 diffuse = diff * l.intensity * rec.material.difuso * rec.material.color; // Difusa com coeficiente difuso do material
+
+//             // Iluminação Especular
+//             vec3 view_dir = normalize(r.origin() - rec.p); // Direção do observador (raio)
+//             vec3 reflect_dir = reflect(-light_dir, normal); // Vetor refletido
+//             float spec = pow(std::max(dot(view_dir, reflect_dir), 0.0), rec.material.rugosidade);
+//             vec3 specular = spec * l.intensity * rec.material.especular * vec3(1.0, 1.0, 1.0); // Cor da luz especular (branca)
+
+//             // Acumulando a cor final
+//             color += diffuse + specular;
+//         }
+
+//         return color;
+//     }
+//     else {
+//         // Se não houver interseção, retorna a cor do fundo
+//         vec3 unit_direction = unit_vector(r.direction());
+//         float t = 0.5 * (unit_direction.y() + 1.0);
+//         return (1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
+//     }
+// }
+
+
+
+// vec3 color4(const ray& r, hitable *world, const std::vector<light>& lights) {
+//     hit_record rec; // Estrutura para armazenar as informações sobre o ponto de interseção
+//     if (world->hit(r, 0.0, FLT_MAX, rec)) { // Verifica se o raio atinge algum objeto no mundo
+//         // Se o raio atinge um objeto, vamos calcular a cor do ponto de interseção
+//         vec3 color = rec.cor;  // Cor base do objeto (assumindo que o objeto tem uma cor própria)
+
+//         // Para cada luz na cena, calculamos a iluminação
+//         for (const auto& l : lights) {
+//             // Vetor que vai da superfície até a posição da luz
+//             vec3 light_dir = normalize(l.position - rec.p); // Posição da luz - Ponto de interseção
+
+//             // Produto escalar entre o vetor normal e a direção da luz (Lambertian)
+//             float diff = std::max(0.0f, static_cast<float>(dot(rec.normal, light_dir)));
+
+//             // Intensidade da luz na cor do objeto
+//             color += diff * l.intensity * l.color; // Modificar a cor do objeto pela intensidade da luz
+//         }
+
+//         // Retorna a cor final após iluminação
+//         return color;
+//     }
+//     else {
+//         // Se o raio não atingir nenhum objeto, gera uma cor de fundo (gradiente de azul)
+//         vec3 unit_direction = unit_vector(r.direction()); // Normaliza a direção do raio
+//         float t = 0.5 * (unit_direction.y() + 1.0); // Calcula um valor 't' baseado na direção Y
+//         // Retorna um gradiente entre branco (1.0, 1.0, 1.0) e azul claro (0.5, 0.7, 1.0)
+//         return (1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
+//     }
+// }
+
+// vec3 color_with_shadows4(const ray& r, hitable *world, const std::vector<light>& lights, vec3 ambient_light, int depth = 5) {
+//     if (depth <= 0) return vec3(0, 0, 0);  // Evita chamadas infinitas
+
+//     hit_record rec;
+//     if (world->hit(r, 0.001f, FLT_MAX, rec)) {
+//         vec3 final_color(0, 0, 0);
+//         vec3 normal = rec.normal;
+//         vec3 view_dir = normalize(-r.direction());  // Direção do observador
+//         Material material = rec.material;
+
+//         // Reflexão e refração com Fresnel
+//         float fresnel = pow(1.0f - fabs(dot(view_dir, normal)), 5.0f);
+//         float reflectance = material.reflexao + (1.0f - material.reflexao) * fresnel;
+
+//         vec3 reflected_color(0, 0, 0);
+//         vec3 refracted_color(0, 0, 0);
+
+//         // Reflexão
+//         if (material.reflexao > 0.0f) {
+//             vec3 reflected_dir = reflect(r.direction(), normal);
+//             ray reflected_ray(rec.p + reflected_dir * 0.001f, reflected_dir);
+//             reflected_color = color_with_shadows4(reflected_ray, world, lights, ambient_light, depth - 1);
+//         }
+
+//         // Refração
+//         if (material.transmissao > 0.0f) {
+//             vec3 refracted_dir;
+//             float ni_over_nt = (dot(view_dir, normal) > 0) ? material.ior : (1.0f / material.ior);
+        
+//             if (refract(r.direction(), normal, ni_over_nt, refracted_dir)) {
+//                 ray refracted_ray(rec.p + refracted_dir * 0.001f, refracted_dir);
+//                 refracted_color = color_with_shadowsteste(refracted_ray, world, lights, ambient_light, depth - 1);
+//             } else {
+//                 // Reflexão total interna
+//                 refracted_color = vec3(0, 0, 0);
+//             }
+//         }
+
+//         // Mistura entre reflexão e refração
+//         // A refração deve ser usada diretamente para materiais transparentes
+//         if (material.transmissao > 0.0f) {
+//             // Para materiais transparentes, a cor refratada deve ser ponderada pela transparência
+//             final_color += (1.0f - material.transmissao) * reflected_color + material.transmissao * refracted_color;
+//         } else {
+//             // Caso contrário, mistura entre reflexão e refração normal
+//             final_color += reflectance * reflected_color + (1.0f - reflectance) * refracted_color;
+//         }
+
+//         // Iluminação direta
+//         for (const auto& light : lights) {
+//             vec3 light_dir = normalize(light.position - rec.p);
+//             vec3 half_vector = normalize(light_dir + view_dir);
+//             float diff = std::max(float(dot(normal, light_dir)), 0.0f);
+//             float spec = pow(std::max(float(dot(normal, half_vector)), 0.0f), material.shininess);
+
+//             // Verificação de sombra
+//             ray shadow_ray(rec.p + normal * 0.001f, light_dir);  // Raio para verificar se a luz é bloqueada
+//             hit_record shadow_rec;
+//             if (world->hit(shadow_ray, 0.001f, FLT_MAX, shadow_rec)) {
+//                 continue;  // Se o raio de sombra bate em algo, a luz é bloqueada
+//             }
+
+//             // Cálculos de difuso e especular
+//             vec3 diffuse = material.color * diff * material.difuso * light.color;
+//             vec3 specular = vec3(1.0, 1.0, 1.0) * spec * material.especular * light.color;
+
+//             final_color += diffuse + specular;
+//         }
+
+//         // Adiciona luz ambiente
+//         final_color += ambient_light * material.color * material.ambiental;
+
+//         return final_color;
+//     }
+//     return vec3(0, 0, 0);
+// }
+
+
+
+vec3 color_with_shadowsteste(const ray& r, hitable *world, const std::vector<light>& lights, vec3 ambient_light, int depth = 4) {
     if (depth <= 0) return vec3(0, 0, 0);  // Evita chamadas infinitas
 
     hit_record rec;
@@ -551,16 +562,31 @@ vec3 color_with_shadowsteste(const ray& r, hitable *world, const std::vector<lig
 
         // Refração
         if (material.transmissao > 0.0f) {
-            float eta = (dot(view_dir, normal) > 0) ? material.ior : (1.0f / material.ior);
-            vec3 refracted_dir = refract(r.direction(), normal, eta);
-            if (length(refracted_dir) > 0) { 
-                ray refracted_ray(rec.p + refracted_dir * 0.001f, refracted_dir);
+            vec3 refracted_dir;
+            float ni_over_nt = (dot(view_dir, normal) > 0) ? material.ior : (1.0f / material.ior);
+        
+
+            vec3 outward_normal;
+            if (dot(r.direction(), rec.normal) > 0) {
+                // O raio está saindo da esfera
+                outward_normal = -rec.normal;
+                ni_over_nt = material.ior; // Índice de refração do material
+            } else {
+                // O raio está entrando na esfera
+                outward_normal = rec.normal;
+                ni_over_nt = 1.0f / material.ior; // Índice de refração do ar para o material
+            }
+            if (refract(r.direction(), outward_normal, ni_over_nt, refracted_dir)) {
+                ray refracted_ray(rec.p + refracted_dir * 0.000000000000001f, refracted_dir);
                 refracted_color = color_with_shadowsteste(refracted_ray, world, lights, ambient_light, depth - 1);
+            } else {
+                // Reflexão total interna
+                refracted_color = vec3(0, 0, 0);
             }
         }
 
         // Mistura entre reflexão e refração (transparente)
-        final_color += (1.0f - reflectance) * refracted_color + reflectance * reflected_color;
+        final_color += material.transmissao * refracted_color + (1.0f - material.transmissao) * reflected_color;
 
         // Iluminação direta (modelo de Phong)
         for (const auto& light : lights) {
@@ -618,14 +644,14 @@ void desafio1() {
     Material materialPersonalizado_azul(0.6f, 0.8f, 0.1f, 0.3f, 0.0f, 0.7f, 1.0f, vec3(0.0, 0.0, 1.0));
 
 
-    Material vidro(0.1f, 0.0f, 0.1f, 0.9f, 0.5f, 0.2f, 0.0f, vec3(0.9, 0.9, 1.0), 1.5f);  // Vidro
+    Material vidro(0.1f, 0.0f, 0.1f, 0.9f, 0.5f, 0.2f, 0.0f, vec3(0.9, 0.9, 1.0), 1.0f);  // Vidro
     Material agua(0.1f, 0.0f, 0.05f, 0.95f, 0.5f, 0.2f, 0.0f, vec3(0.0, 0.5, 1.0), 1.33f); // Água
     Material diamante(0.1f, 0.0f, 0.2f, 0.9f, 0.7f, 0.2f, 0.0f, vec3(1.0, 1.0, 1.0), 2.42f); // Diamante
     Material plastico(0.5f, 0.1f, 0.3f, 0.2f, 0.2f, 0.6f, 0.0f, vec3(1.0, 0.0, 0.0), 1.4f); // Plástico
 
 
     // Criando fontes de luz
-    light l1(vec3(0, 5, 5), vec3(1.0, 1.0, 1.0), 1.0f); // Luz branca
+    light l1(vec3(0, 5, 5), vec3(1.0, 1.0, 1.0), 0.5f); // Luz branca
     light l2(vec3(-5, 5, 5), vec3(1.0, 1.0, 1.0), 0.0f); // Luz vermelha
     std::vector<light> lights = {l1}; // Lista de luzes
     // Planos
@@ -645,26 +671,25 @@ void desafio1() {
 
 
     Material vidro2(0.1f, 0.0f, 0.1f, 0.1f, 0.1f, 0.2f, 0.0f, vec3(1.0, 1.0, 1.0), 1.0f);  // Vidro (transparente)
-    Material vidro3(0.1f, 0.0f, 0.1f, 0.2f, 0.9f, 0.2f, 0.0f, vec3(1.0, 1.0, 1.0), 1.5f);  // Vidro (transparente com alta transmissão)
-
+    Material vidro3(0.1f, 0.0f, 0.1f, 0.0f, 1.0f, 0.2f, 0.0f, vec3(1.0, 1.0, 1.0), 1.0f);
 
     // Plano Reflexivo (chão reflexivo)
-    list[0] = new plane(vec3(0, -0.5, 0), vec3(0, 1, 0), vec3(1.0f, 1.0f, 0.0f), materialReflexivo);  // Chão reflexivo (amarelo)
+    list[0] = new plane(vec3(0, -0.5, 0), vec3(0, 1, 0), vec3(1.0f, 1.0f, 0.0f), vidro);  // Chão reflexivo (amarelo)
     
     // Esferas
     // Esfera Transparente (Vidro) no centro
     list[1] = new sphere(vec3(0, 0.2, 3.0), 0.6, vec3(1.0f, 0.0f, 0.0f), vidro3);  // Esfera Transparente (Vidro)
 
     // Esfera Vermelha dentro da esfera transparente
-    list[2] = new sphere(vec3(0, 0.2, 2.0), 0.4, vec3(1.0f, 0.0f, 0.0f), materialVermelho);  // Esfera Vermelha (dentro da transparente)
+    list[2] = new sphere(vec3(0, 0.2, 3.0), 0.4, vec3(1.0f, 0.0f, 0.0f), materialVermelho);  // Esfera Vermelha (dentro da transparente)
 
     // Outra esfera azul fora (para exemplo)
-    list[3] = new sphere(vec3(-1.3, 0.2, 0.0), 0.6, vec3(0.0f, 0.0f, 1.0f), materialVermelho);  // Esfera Azul (opaca)
+    // list[3] = new sphere(vec3(-1.5, -0.2, -0.9), 1.0, vec3(0.0f, 0.0f, 1.0f), materialVermelho);  // Esfera Azul (opaca)
 
     // list[4] = new plane(vec3(-0.7, 0.0, 0.0), vec3(1.0, 0.0, 0.0), vec3(0.5f, 0.5f, 0.5f), azul);  
 
 
-    hitable *world = new hitable_list(list, 4);  // Agora temos 9 objetos (planos e esferas)
+    hitable *world = new hitable_list(list, 3);  // Agora temos 9 objetos (planos e esferas)
 
     // Laço para gerar os pixels da imagem
     for (int j = ny - 1; j >= 0; j--) { 
@@ -820,13 +845,15 @@ void triangulo_auto(const std::vector<triangle*>& triangles){
         vec3(1.0, 1.0, 1.0) // cor do material (branco)
     );
 
-
+    Material vidro3(0.1f, 0.0f, 0.1f, 0.0f, 1.0f, 0.2f, 0.0f, vec3(1.0, 1.0, 1.0), 1.0f);
     // Cria o plano e coloca no índice correto do array
-    list[triangles.size()] = new plane(vec3(0, -1.7, 0), vec3(0, 1, 0), vec3(1.0, 1.0, 0.0), materialReflexivo);
+    list[triangles.size()] = new plane(vec3(0, -1.0, 0), vec3(0, 1, 0), vec3(1.0, 1.0, 0.0), materialReflexivo);
+
+    list[triangles.size()+ 1] = new sphere(vec3(0, 0.2, 3.0), 1.0, vec3(1.0f, 0.0f, 0.0f), vidro3);  // Esfera Transparente (Vidro)
 
 
     // Cria o objeto hitable_list com o tamanho correto (triângulos + 1 plano)
-    hitable *world = new hitable_list(list, triangles.size() + 1);
+    hitable *world = new hitable_list(list, triangles.size() + 2);
 
     // Criando fontes de luz
     light l1(vec3(0, 5, 5), vec3(1.0, 1.0, 1.0), 1.0); // Luz branca
@@ -842,7 +869,7 @@ void triangulo_auto(const std::vector<triangle*>& triangles){
             // Gera o raio para cada pixel, usando a câmera
             ray r = cam.get_ray(u, v);
             // Calcula a cor para o ponto onde o raio atinge
-            vec3 col = color_with_shadows4(r, world, lights, vec3(0.0, 0.0, 0.0));
+            vec3 col = color_with_shadowsteste(r, world, lights, vec3(0.0, 0.0, 0.0));
             int ir = int(255.99 * col[0]); 
             int ig = int(255.99 * col[1]); 
             int ib = int(255.99 * col[2]); 
@@ -1047,7 +1074,7 @@ void triangulo_auto(const std::vector<triangle*>& triangles){
 
 int main(){
 
-    objReader obj("inputs/cubo.obj");
+    objReader obj("inputs/untitled.obj");
     obj.print_faces();
    
     
@@ -1059,13 +1086,18 @@ int main(){
 
     
 
-    mat4 rotation = rotation_matrix_y(M_PI / 4);  
+    mat4 rotation = rotation_matrix_y(M_PI / 8);  
     mat4 scale = scaling_matrix(0.0);
 
     Material vidro(0.1f, 0.0f, 0.1f, 0.9f, 0.5f, 0.2f, 0.0f, vec3(0.9, 0.9, 1.0), 1.5f);  // Vidro
     Material agua(0.1f, 0.0f, 0.05f, 0.95f, 0.5f, 0.2f, 0.0f, vec3(0.0, 0.5, 1.0), 1.33f); // Água
     Material diamante(0.1f, 0.0f, 0.2f, 0.9f, 0.7f, 0.2f, 0.0f, vec3(1.0, 1.0, 1.0), 2.42f); // Diamante
     Material plastico(0.5f, 0.1f, 0.3f, 0.2f, 0.2f, 0.6f, 0.0f, vec3(1.0, 0.0, 0.0), 1.4f); // Plástico
+
+
+    Material materialVermelho(0.6f, 0.8f, 1.0f, 0.3f, 0.0f, 0.7f, 1.0f, vec3(1.0f, 0.0f, 0.0f));  // Esfera Vermelha (opaca)
+
+
 
     // Itera sobre cada face
     for (const auto& face : faces) {
