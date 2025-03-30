@@ -5,6 +5,7 @@
 #include "ray.h"
 #include "hitablelist.h"
 #include "sphereh.h"
+#include "textureh.h"
 #include "cylinderh.h"
 #include "float.h"
 #include <cfloat>
@@ -602,7 +603,8 @@ vec3 color_with_shadowsteste(const ray& r, hitable *world, const std::vector<lig
             final_color += diffuse + specular;
         }
 
-        // Adiciona luz ambiente
+        // Print material color 
+        // printf("Material Color: %f %f %f\n", material.color[0], material.color[1], material.color[2]);
         final_color += ambient_light * material.color * material.ambiental;
 
         return final_color;
@@ -683,7 +685,9 @@ void desafio1() {
     // Esfera Vermelha dentro da esfera transparente
     list[2] = new sphere(vec3(0, 0.2, 9.0), 0.4, vec3(1.0f, 0.0f, 0.0f), materialVermelho);  // Esfera Vermelha (dentro da transparente)
     
-    list[3] = new cylinder(vec3(0, 0, 0), vec3(1,1,1), 0.4, 0.6, vec3(1.0f, 0.0f, 0.0f), materialVermelho);  // Esfera Vermelha (dentro da transparente)
+    // Cylinder with texture
+    Texture *texture = new Texture("wood");
+    list[3] = new cylinder(vec3(0, 0, 0), vec3(1,1,1), 0.4, 0.6, materialVermelho, texture);
 
     // Outra esfera azul fora (para exemplo)
     // list[3] = new sphere(vec3(-1.5, -0.2, -0.9), 1.0, vec3(0.0f, 0.0f, 1.0f), materialVermelho);  // Esfera Azul (opaca)
