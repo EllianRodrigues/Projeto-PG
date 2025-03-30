@@ -586,7 +586,7 @@ vec3 color_with_shadowsteste(const ray& r, hitable *world, const std::vector<lig
         }
 
         // Mistura entre reflexão e refração (transparente)
-        final_color += material.transmissao * refracted_color + (1.0f - material.transmissao) * reflected_color;
+        final_color += material.transmissao * refracted_color + material.reflexao * reflected_color;
 
         // Iluminação direta (modelo de Phong)
         for (const auto& light : lights) {
@@ -648,7 +648,6 @@ void desafio1() {
     Material agua(0.1f, 0.0f, 0.05f, 0.95f, 0.5f, 0.2f, 0.0f, vec3(0.0, 0.5, 1.0), 1.33f); // Água
     Material diamante(0.1f, 0.0f, 0.2f, 0.9f, 0.7f, 0.2f, 0.0f, vec3(1.0, 1.0, 1.0), 2.42f); // Diamante
     Material plastico(0.5f, 0.1f, 0.3f, 0.2f, 0.2f, 0.6f, 0.0f, vec3(1.0, 0.0, 0.0), 1.4f); // Plástico
-
 
     // Criando fontes de luz
     light l1(vec3(0, 5, 5), vec3(1.0, 1.0, 1.0), 0.5f); // Luz branca
@@ -1093,7 +1092,6 @@ int main(){
     Material agua(0.1f, 0.0f, 0.05f, 0.95f, 0.5f, 0.2f, 0.0f, vec3(0.0, 0.5, 1.0), 1.33f); // Água
     Material diamante(0.1f, 0.0f, 0.2f, 0.9f, 0.7f, 0.2f, 0.0f, vec3(1.0, 1.0, 1.0), 2.42f); // Diamante
     Material plastico(0.5f, 0.1f, 0.3f, 0.2f, 0.2f, 0.6f, 0.0f, vec3(1.0, 0.0, 0.0), 1.4f); // Plástico
-
 
     Material materialVermelho(0.6f, 0.8f, 1.0f, 0.3f, 0.0f, 0.7f, 1.0f, vec3(1.0f, 0.0f, 0.0f));  // Esfera Vermelha (opaca)
 
