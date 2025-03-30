@@ -5,6 +5,7 @@
 #include "ray.h"
 #include "hitablelist.h"
 #include "sphereh.h"
+#include "cylinderh.h"
 #include "float.h"
 #include <cfloat>
 #include "plane.h"
@@ -677,10 +678,12 @@ void desafio1() {
     
     // Esferas
     // Esfera Transparente (Vidro) no centro
-    list[1] = new sphere(vec3(0, 0.2, 3.0), 0.6, vec3(1.0f, 0.0f, 0.0f), vidro3);  // Esfera Transparente (Vidro)
+    list[1] = new sphere(vec3(0, 0.2, 8.0), 0.6, vec3(1.0f, 0.0f, 0.0f), vidro3);  // Esfera Transparente (Vidro)
 
     // Esfera Vermelha dentro da esfera transparente
-    list[2] = new sphere(vec3(0, 0.2, 3.0), 0.4, vec3(1.0f, 0.0f, 0.0f), materialVermelho);  // Esfera Vermelha (dentro da transparente)
+    list[2] = new sphere(vec3(0, 0.2, 9.0), 0.4, vec3(1.0f, 0.0f, 0.0f), materialVermelho);  // Esfera Vermelha (dentro da transparente)
+    
+    list[3] = new cylinder(vec3(0, 0, 0), vec3(1,1,1), 0.4, 0.6, vec3(1.0f, 0.0f, 0.0f), materialVermelho);  // Esfera Vermelha (dentro da transparente)
 
     // Outra esfera azul fora (para exemplo)
     // list[3] = new sphere(vec3(-1.5, -0.2, -0.9), 1.0, vec3(0.0f, 0.0f, 1.0f), materialVermelho);  // Esfera Azul (opaca)
@@ -688,7 +691,7 @@ void desafio1() {
     // list[4] = new plane(vec3(-0.7, 0.0, 0.0), vec3(1.0, 0.0, 0.0), vec3(0.5f, 0.5f, 0.5f), azul);  
 
 
-    hitable *world = new hitable_list(list, 3);  // Agora temos 9 objetos (planos e esferas)
+    hitable *world = new hitable_list(list, 4);  // Agora temos 9 objetos (planos e esferas)
 
     // Laço para gerar os pixels da imagem
     for (int j = ny - 1; j >= 0; j--) { 
@@ -1073,63 +1076,63 @@ void triangulo_auto(const std::vector<triangle*>& triangles){
 
 int main(){
 
-    objReader obj("inputs/untitled.obj");
-    obj.print_faces();
+    // objReader obj("inputs/untitled.obj");
+    // obj.print_faces();
    
     
-    // Obtém os pontos das faces
-    std::vector<std::vector<point>> faces = obj.getFacePoints();
+    // // Obtém os pontos das faces
+    // std::vector<std::vector<point>> faces = obj.getFacePoints();
 
-    // Lista para armazenar os triângulos
-    std::vector<triangle*> triangles;
+    // // Lista para armazenar os triângulos
+    // std::vector<triangle*> triangles;
 
     
 
-    mat4 rotation = rotation_matrix_y(M_PI / 8);  
-    mat4 scale = scaling_matrix(0.0);
+    // mat4 rotation = rotation_matrix_y(M_PI / 8);  
+    // mat4 scale = scaling_matrix(0.0);
 
-    Material vidro(0.1f, 0.0f, 0.1f, 0.9f, 0.5f, 0.2f, 0.0f, vec3(0.9, 0.9, 1.0), 1.5f);  // Vidro
-    Material agua(0.1f, 0.0f, 0.05f, 0.95f, 0.5f, 0.2f, 0.0f, vec3(0.0, 0.5, 1.0), 1.33f); // Água
-    Material diamante(0.1f, 0.0f, 0.2f, 0.9f, 0.7f, 0.2f, 0.0f, vec3(1.0, 1.0, 1.0), 2.42f); // Diamante
-    Material plastico(0.5f, 0.1f, 0.3f, 0.2f, 0.2f, 0.6f, 0.0f, vec3(1.0, 0.0, 0.0), 1.4f); // Plástico
+    // Material vidro(0.1f, 0.0f, 0.1f, 0.9f, 0.5f, 0.2f, 0.0f, vec3(0.9, 0.9, 1.0), 1.5f);  // Vidro
+    // Material agua(0.1f, 0.0f, 0.05f, 0.95f, 0.5f, 0.2f, 0.0f, vec3(0.0, 0.5, 1.0), 1.33f); // Água
+    // Material diamante(0.1f, 0.0f, 0.2f, 0.9f, 0.7f, 0.2f, 0.0f, vec3(1.0, 1.0, 1.0), 2.42f); // Diamante
+    // Material plastico(0.5f, 0.1f, 0.3f, 0.2f, 0.2f, 0.6f, 0.0f, vec3(1.0, 0.0, 0.0), 1.4f); // Plástico
 
-    Material materialVermelho(0.6f, 0.8f, 1.0f, 0.3f, 0.0f, 0.7f, 1.0f, vec3(1.0f, 0.0f, 0.0f));  // Esfera Vermelha (opaca)
+    // Material materialVermelho(0.6f, 0.8f, 1.0f, 0.3f, 0.0f, 0.7f, 1.0f, vec3(1.0f, 0.0f, 0.0f));  // Esfera Vermelha (opaca)
 
 
 
-    // Itera sobre cada face
-    for (const auto& face : faces) {
-        if (face.size() >= 3) { 
-            vec3 randomColor(
-                static_cast<float>(rand()) / RAND_MAX, // Valor aleatório entre 0 e 1
-                static_cast<float>(rand()) / RAND_MAX,
-                static_cast<float>(rand()) / RAND_MAX
-            );
-            Material materialPersonalizado(0.6f, 0.8f, 1.1f, 0.0f, 0.0f, 0.7f, 1.0f ,vec3(0.0, 1.0, 0.0), 1.0f);
-            // Aplica a rotação no eixo X a cada vértice
-            vec3 v1_rotated = rotation * vec3(face[0].x, face[0].y, face[0].z);
-            vec3 v2_rotated = rotation * vec3(face[1].x, face[1].y, face[1].z);
-            vec3 v3_rotated = rotation * vec3(face[2].x, face[2].y, face[2].z);
+    // // Itera sobre cada face
+    // for (const auto& face : faces) {
+    //     if (face.size() >= 3) { 
+    //         vec3 randomColor(
+    //             static_cast<float>(rand()) / RAND_MAX, // Valor aleatório entre 0 e 1
+    //             static_cast<float>(rand()) / RAND_MAX,
+    //             static_cast<float>(rand()) / RAND_MAX
+    //         );
+    //         Material materialPersonalizado(0.6f, 0.8f, 1.1f, 0.0f, 0.0f, 0.7f, 1.0f ,vec3(0.0, 1.0, 0.0), 1.0f);
+    //         // Aplica a rotação no eixo X a cada vértice
+    //         vec3 v1_rotated = rotation * vec3(face[0].x, face[0].y, face[0].z);
+    //         vec3 v2_rotated = rotation * vec3(face[1].x, face[1].y, face[1].z);
+    //         vec3 v3_rotated = rotation * vec3(face[2].x, face[2].y, face[2].z);
 
             
 
-            triangles.push_back(new triangle(
-                // vec3(face[0].x, face[0].y, face[0].z),
-                // vec3(face[1].x, face[1].y, face[1].z),
-                // vec3(face[2].x, face[2].y, face[2].z),
-                v1_rotated*1.5,
-                v2_rotated*1.5,
-                v3_rotated*1.5,
-                randomColor*1.5,
-                materialPersonalizado
-            ));
-        }
-    }
+    //         triangles.push_back(new triangle(
+    //             // vec3(face[0].x, face[0].y, face[0].z),
+    //             // vec3(face[1].x, face[1].y, face[1].z),
+    //             // vec3(face[2].x, face[2].y, face[2].z),
+    //             v1_rotated*1.5,
+    //             v2_rotated*1.5,
+    //             v3_rotated*1.5,
+    //             randomColor*1.5,
+    //             materialPersonalizado
+    //         ));
+    //     }
+    // }
 
-    // Verificação (exemplo)
-    std::cout << "Total de triângulos armazenados: " << triangles.size() << std::endl;
+    // // Verificação (exemplo)
+    // std::cout << "Total de triângulos armazenados: " << triangles.size() << std::endl;
 
-    triangulo_auto(triangles); 
+    // triangulo_auto(triangles); 
 
     desafio1();
 
