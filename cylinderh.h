@@ -49,11 +49,6 @@ public:
         vec3 p_proj = rec.p - base_center - dot(rec.p - base_center, axis_dir) * axis_dir;
         rec.normal = unit_vector(p_proj);
         
-        // Calculate texture coordinates if texture exists
-        printf("texture: %p\n", (void*)texture);
-        if (texture) {
-            printf("texture->image: %p\n", (void*)texture->image);
-        }
         if (texture && texture->image) {
           // Convert 3D point to texture coordinates
           float phi = atan2(p_proj.z(), p_proj.x()) + M_PI; // angle around axis [0, 2π]
