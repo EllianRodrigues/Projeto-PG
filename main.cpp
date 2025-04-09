@@ -91,132 +91,6 @@ vec3 color_with_shadowsteste(const ray& r, hitable *world, const std::vector<lig
 
 
 
-
-void desafio1() {
-    int nx = 500;  
-    int ny = 500;  
-    std::ofstream imageFile("criado.ppm"); 
-    imageFile << "P3\n" << nx << " " << ny << "\n255\n"; 
-    
-    // Parâmetros da câmera
-    vec3 lookfrom(0, 0, 5);       // Posição da câmera
-    vec3 lookat(0, 0, 0);         // Ponto onde a câmera está olhando
-    vec3 vup(0, 1, 0);            // Vetor "para cima" que define a orientação da câmera
-    double distance = 1.0;        // Distância entre a câmera e a tela (foco da lente)
-    double screen_height = 1.0;   // Altura da tela de visualização
-    double screen_width = 1.0;    // Largura da tela de visualização
-    camera cam(lookfrom, lookat, vup, distance, screen_height, screen_width, nx);
-    
-    // Criando planos (posição, vetor normal)
-    hitable *list[4];
-
-    Material vidro(0.1f, 0.0f, 0.1f, 0.9f, 0.5f, 0.2f, 0.0f, vec3(0.9, 0.9, 1.0), 1.0f);  // Vidro
-
-    // Criando fontes de luz
-    light l1(vec3(0, 5, 5), vec3(1.0, 1.0, 1.0), 0.5f); 
-    light l2(vec3(-5, 5, 5), vec3(1.0, 1.0, 1.0), 0.0f);
-    std::vector<light> lights = {l1}; 
-
-    Material materialVermelho(0.6f, 0.8f, 1.0f, 0.3f, 0.0f, 0.7f, 1.0f, vec3(1.0f, 0.0f, 0.0f));  // Esfera Vermelha (opaca)
-
-    Material vidro3(0.1f, 0.0f, 0.1f, 0.0f, 1.0f, 0.2f, 0.0f, vec3(1.0, 1.0, 1.0), 1.0f);
-
-
-    list[0] = new plane(vec3(0, -0.5, 0), vec3(0, 1, 0), vec3(1.0f, 1.0f, 0.0f), vidro); 
-    
-    list[1] = new sphere(vec3(0, 0.2, 3.0), 0.6, vec3(1.0f, 0.0f, 0.0f), vidro3);  
-
-    list[2] = new sphere(vec3(0, 0.2, 3.0), 0.4, vec3(1.0f, 0.0f, 0.0f), materialVermelho); 
-
-    hitable *world = new hitable_list(list, 3); 
-
-    // Laço para gerar os pixels da imagem
-    for (int j = ny - 1; j >= 0; j--) { 
-        for (int i = 0; i < nx; i++) { 
-            float u = float(i) / float(nx);  
-            float v = float(j) / float(ny);
-            ray r = cam.get_ray(u, v);
-            vec3 col = color_with_shadowsteste(r, world, lights,  vec3(1.0, 1.0, 1.0));
-            int ir = int(255.99 * col[0]); 
-            int ig = int(255.99 * col[1]); 
-            int ib = int(255.99 * col[2]); 
-            imageFile << ir << " " << ig << " " << ib << "\n";
-        }
-    }
-
-    std::cerr << "\nFeito.\n";
-    imageFile.close();
-}
-
-
-void triangulo_auto(const std::vector<triangle*>& triangles){
-
-    int nx = 500; 
-    int ny = 500; 
-    std::ofstream imageFile("obj.ppm"); 
-    imageFile << "P3\n" << nx << " " << ny << "\n255\n"; 
-    
-    // Parâmetros da câmera
-    vec3 lookfrom(0, 0, 5);       // Posição da câmera
-    vec3 lookat(0, 0, 0);         // Ponto onde a câmera está olhando
-    vec3 vup(0, 1, 0);            // Vetor "para cima" que define a orientação da câmera
-    double distance = 1.0;        // Distância entre a câmera e a tela (foco da lente)
-    double screen_height = 2.0;   // Altura da tela de visualização
-    double screen_width = 2.0;    // Largura da tela de visualização
-    camera cam(lookfrom, lookat, vup, distance, screen_height, screen_width, nx);
-    
-    hitable** list = new hitable*[triangles.size() + 1];  // Aloca espaço para os triângulos + 1 (para o plano)
-
-    // Copia os triângulos para o array
-    for (size_t i = 0; i < triangles.size(); i++) {
-        list[i] = triangles[i];
-    }
-
-    Material materialReflexivo(
-        0.8f,  // coeficiente de reflexão (80% de reflexão)
-        0.0f,  // coeficiente de transmissão (sem transparência)
-        1.0f,  // cor do material (branco, refletindo tudo)
-        0.5f,  // coeficiente difuso
-        0.5f,  // coeficiente especular
-        1.0f,  // brilho especular (quanto mais alto, mais "brilhante" o reflexo)
-        1.5f,  // índice de refração (não afetará muito já que não há refração aqui)
-        vec3(1.0, 1.0, 1.0) // cor do material (branco)
-    );
-
-    Material vidro(0.1f, 0.0f, 0.1f, 0.0f, 1.0f, 0.2f, 0.0f, vec3(1.0, 1.0, 1.0), 1.0f);
-    // Cria o plano e coloca no índice correto do array
-    list[triangles.size()] = new plane(vec3(0, -1.0, 0), vec3(0, 1, 0), vec3(1.0, 1.0, 0.0), materialReflexivo);
-
-    list[triangles.size()+ 1] = new sphere(vec3(0, 0.2, 3.0), 1.0, vec3(1.0f, 0.0f, 0.0f), vidro);  // Esfera Transparente (Vidro)
-
-
-    // Cria o objeto hitable_list com o tamanho correto (triângulos + 1 plano)
-    hitable *world = new hitable_list(list, triangles.size() + 2);
-
-    // Criando fontes de luz
-    light l1(vec3(0, 5, 5), vec3(1.0, 1.0, 1.0), 1.0);
-    light l2(vec3(-5, 5, 5), vec3(1.0, 0.0, 0.0), 1.0);
-    std::vector<light> lights = {l1}; 
-
-    for (int j = ny - 1; j >= 0; j--) { 
-        for (int i = 0; i < nx; i++) { 
-            float u = float(i) / float(nx);  
-            float v = float(j) / float(ny);
-            ray r = cam.get_ray(u, v);
-            vec3 col = color_with_shadowsteste(r, world, lights, vec3(0.0, 0.0, 0.0));
-            int ir = int(255.99 * col[0]); 
-            int ig = int(255.99 * col[1]); 
-            int ib = int(255.99 * col[2]); 
-            imageFile << ir << " " << ig << " " << ib << "\n";
-        }
-    }
-
-    std::cerr << "\nFeito.\n";
-    imageFile.close();
-
-}
-
-
 #ifndef M_PI
     #define M_PI 3.14159265358979323846
 #endif
@@ -250,8 +124,9 @@ void bezier(const std::vector<triangle*>& triangles) {
 
     // Criando fontes de luz
     light l1(vec3(0, 5, 5), vec3(1.0, 1.0, 1.0), 1.0); // Luz branca
-    light l2(vec3(-5, 5, 5), vec3(1.0, 0.0, 0.0), 0.8); // Luz vermelha
-    std::vector<light> lights = {l1,l2}; // Lista de luzes
+    // light l2(vec3(0, 5, 0), vec3(0.0, 0.0, 0.0), 1.0); // Luz verde
+    light l3(vec3(-5, 5, 5), vec3(1.0, 0.0, 0.0), 0.8); // Luz vermelha
+    std::vector<light> lights = {l1,l3}; // Lista de luzes
 
     // Laço para gerar os pixels da imagem
     for (int j = ny - 1; j >= 0; j--) { 
@@ -332,6 +207,115 @@ void generate_bezier_surface(const std::vector<std::vector<vec3>>& control_point
     }
 }
 
+void generate_revolution_solid_from_bezier_surface(const std::vector<triangle*>& input_triangles, std::vector<triangle*>& output_triangles, int num_segments) {
+    float angle_step = 2 * M_PI / num_segments;
+
+    for (const auto& tri : input_triangles) {
+        vec3 vertices[3] = {tri->vertex1, tri->vertex2, tri->vertex3};
+
+        for (int i = 0; i < num_segments; i++) {
+            float angle1 = i * angle_step;
+            float angle2 = (i + 1) * angle_step;
+
+            mat4 rotation1 = rotation_matrix_y(angle1);
+            mat4 rotation2 = rotation_matrix_y(angle2);
+
+            vec3 rotated_vertices1[3];
+            vec3 rotated_vertices2[3];
+
+            for (int j = 0; j < 3; j++) {
+                rotated_vertices1[j] = rotation1 * vertices[j];
+                rotated_vertices2[j] = rotation2 * vertices[j];
+            }
+
+            Material material = tri->material;
+
+            // Create two triangles for each segment
+            output_triangles.push_back(new triangle(rotated_vertices1[0], rotated_vertices2[0], rotated_vertices1[1], tri->cor, material));
+            output_triangles.push_back(new triangle(rotated_vertices1[1], rotated_vertices2[0], rotated_vertices2[1], tri->cor, material));
+
+            output_triangles.push_back(new triangle(rotated_vertices1[1], rotated_vertices2[1], rotated_vertices1[2], tri->cor, material));
+            output_triangles.push_back(new triangle(rotated_vertices1[2], rotated_vertices2[1], rotated_vertices2[2], tri->cor, material));
+        }
+    }
+}
+
+// bezier_curve
+void generate_bezier_curve(const std::vector<vec3>& control_points, int resolution, std::vector<vec3>& curve_points) {
+    for (int i = 0; i <= resolution; i++) {
+        float t = float(i) / resolution;
+        vec3 point(0, 0, 0);
+        int n = control_points.size() - 1;
+        for (int j = 0; j <= n; j++) {
+            float bernstein_value = bernstein(j, n, t);
+            point += bernstein_value * control_points[j];
+        }
+        curve_points.push_back(point);
+    }
+}
+
+void generate_revolution_solid_from_curve(const std::vector<vec3>& curve_points, std::vector<triangle*>& output_triangles, int num_segments) {
+    float angle_step = 2 * M_PI / num_segments;
+
+    for (size_t i = 0; i < curve_points.size() - 1; i++) {
+        vec3 p1 = curve_points[i];
+        vec3 p2 = curve_points[i + 1];
+
+        for (int j = 0; j < num_segments; j++) {
+            float angle1 = j * angle_step;
+            float angle2 = (j + 1) * angle_step;
+
+            mat4 rotation1 = rotation_matrix_y(angle1);
+            mat4 rotation2 = rotation_matrix_y(angle2);
+
+            vec3 p1_rotated1 = rotation1 * p1;
+            vec3 p2_rotated1 = rotation1 * p2;
+            vec3 p1_rotated2 = rotation2 * p1;
+            vec3 p2_rotated2 = rotation2 * p2;
+
+            Material materialPersonalizado(0.6f, 0.8f, 1.1f, 0.0f, 0.0f, 0.7f, 1.0f, vec3(0.0, 1.0, 0.0), 1.0f);
+
+            // Create two triangles for each segment
+            output_triangles.push_back(new triangle(p1_rotated1, p1_rotated2, p2_rotated1, vec3(1.0, 0.0, 0.0), materialPersonalizado));
+            output_triangles.push_back(new triangle(p2_rotated1, p1_rotated2, p2_rotated2, vec3(1.0, 0.0, 0.0), materialPersonalizado));
+        }
+    }
+}
+
+void bezier_curve(const std::vector<vec3>& curve_points) {
+    int nx = 500;  // Image width
+    int ny = 500;  // Image height
+    std::ofstream imageFile("bezier_curve.ppm");
+    imageFile << "P3\n" << nx << " " << ny << "\n255\n";
+
+    // Initialize the image with a black background
+    std::vector<std::vector<vec3>> image(ny, std::vector<vec3>(nx, vec3(0, 0, 0)));
+
+    // Draw the curve points
+    for (const auto& point : curve_points) {
+        int x = int((point[0] + 1) * nx / 2);  // Map x from [-1, 1] to [0, nx]
+        int y = int((point[1] + 1) * ny / 2);  // Map y from [-1, 1] to [0, ny]
+        if (x >= 0 && x < nx && y >= 0 && y < ny) {
+            image[ny - y - 1][x] = vec3(1, 0, 0);  // Red color for the curve
+        }
+    }
+
+    // Write the image to the file
+    for (int j = 0; j < ny; j++) {
+        for (int i = 0; i < nx; i++) {
+            vec3 color = image[j][i];
+            int ir = int(255.99 * color[0]);
+            int ig = int(255.99 * color[1]);
+            int ib = int(255.99 * color[2]);
+            imageFile << ir << " " << ig << " " << ib << "\n";
+        }
+    }
+
+    std::cerr << "\nBezier curve generated.\n";
+    imageFile.close();
+}
+
+
 void translate_triangles(std::vector<triangle*>& triangles, const vec3& translation) {
     for (auto& tri : triangles) {
         tri->vertex1 += translation;
@@ -360,30 +344,55 @@ void rotate_triangles(std::vector<triangle*>& triangles, const mat4& rotation_ma
 
 void render_bezier_surface() {
     // pontos da superfície de Bézier
-    std::vector<std::vector<vec3>> control_points = {
-        {vec3(-1, 0, -1), vec3(-0.5, 1, -1), vec3(0.5, 1, -1), vec3(1, 0, -1)},
-        {vec3(-1, 0, -0.5), vec3(-0.5, 1, -0.5), vec3(0.5, 1, -0.5), vec3(1, 0, -0.5)},
-        {vec3(-1, 0, 0.5), vec3(-0.5, 1, 0.5), vec3(0.5, 1, 0.5), vec3(1, 0, 0.5)},
-        {vec3(-1, 0, 1), vec3(-0.5, 1, 1), vec3(0.5, 1, 1), vec3(1, 0, 1)}
-    };
+    // std::vector<std::vector<vec3>> control_points = {
+    //     {vec3(-1, 0, -1), vec3(-0.5, 1, -1), vec3(0.5, 1, -1), vec3(1, 0, -1)},
+    //     {vec3(-1, 0, -0.5), vec3(-0.5, 1, -0.5), vec3(0.5, 1, -0.5), vec3(1, 0, -0.5)},
+    //     {vec3(-1, 0, 0.5), vec3(-0.5, 1, 0.5), vec3(0.5, 1, 0.5), vec3(1, 0, 0.5)},
+    //     {vec3(-1, 0, 1), vec3(-0.5, 1, 1), vec3(0.5, 1, 1), vec3(1, 0, 1)}
+    // };
 
-    int resolution = 20;
+    // int resolution = 20;
 
 
-    std::vector<triangle*> triangles;
-    generate_bezier_surface(control_points, resolution, triangles);
+    // std::vector<triangle*> triangles;
+    // generate_bezier_surface(control_points, resolution, triangles);
 
-    float scale_factor = 2.5;
-    scale_triangles(triangles, scale_factor);
+    // float scale_factor = 2.5;
+    // scale_triangles(triangles, scale_factor);
 
-    float angle = M_PI / 9; 
-    mat4 rotation = rotation_matrix_y(angle);
-    rotate_triangles(triangles, rotation);
+    // float angle = M_PI / 9; 
+    // mat4 rotation = rotation_matrix_y(angle);
+    // rotate_triangles(triangles, rotation);
 
     // vec3 translation(0.0, 2.0, 0.0); // Move 2 unidades para cima no eixo Y
     // translate_triangles(triangles, translation);
 
-    bezier(triangles);
+    // Cria um novo vetor para armazenar os triângulos de revolução
+    // std::vector<triangle*> revolution_triangles;
+    // int num_segments = 36; // Número de segmentos para a revolução
+    // generate_revolution_solid_from_bezier_surface(triangles, revolution_triangles, num_segments);
+
+    // bezier(triangles);
+
+    std::vector<vec3> control_points = {
+        vec3(0.0, -3.0, 0.0),
+        vec3(-3.0, 0.0, 0.0),
+        vec3(-1.5, 1.5, 0.0),
+        vec3(0.0, 0.0, 0.0)
+    };
+
+
+
+    int resolution = 100;
+    std::vector<vec3> curve_points;
+
+    generate_bezier_curve(control_points, resolution, curve_points);
+    bezier_curve(curve_points);
+
+    std::vector<triangle*> revolution_triangles;
+    int num_segments = 12; // Number of segments for the revolution
+    generate_revolution_solid_from_curve(curve_points, revolution_triangles, num_segments);
+    bezier(revolution_triangles);
 }
 
 
