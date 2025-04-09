@@ -374,11 +374,20 @@ void render_bezier_surface() {
 
     // bezier(triangles);
 
+    // CURVA HALF CORACAO:
+    // std::vector<vec3> control_points = {
+    //     vec3(0.0, -3.0, 0.0),
+    //     vec3(-3.0, 0.0, 0.0),
+    //     vec3(-1.5, 1.5, 0.0),
+    //     vec3(0.0, 0.0, 0.0)
+    // }; 
+
+    // curva cuscuzeira:
     std::vector<vec3> control_points = {
-        vec3(0.0, -3.0, 0.0),
-        vec3(-3.0, 0.0, 0.0),
-        vec3(-1.5, 1.5, 0.0),
-        vec3(0.0, 0.0, 0.0)
+        vec3(-1.0, -1.0, 0.0),
+        vec3(-0.5, 1.0, 0.0),
+        vec3(0.5, -1.0, 0.0),
+        vec3(1.0, 1.0, 0.0)
     };
 
 
@@ -390,7 +399,7 @@ void render_bezier_surface() {
     bezier_curve(curve_points);
 
     std::vector<triangle*> revolution_triangles;
-    int num_segments = 12; // Number of segments for the revolution
+    int num_segments = 36; // Number of segments for the revolution
     generate_revolution_solid_from_curve(curve_points, revolution_triangles, num_segments);
     bezier(revolution_triangles);
 }
